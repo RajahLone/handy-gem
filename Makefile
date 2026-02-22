@@ -8,16 +8,11 @@ LDLIBS  = -lstdc++
 TARGET = handy.prg
 
 # list header files here
-HEADER = c65c02.h c6502mak.h cart.h lynxbase.h lynxdef.h machine.h memfault.h memmap.h mikie.h pixblend.h ram.h rom.h stdlib_gcc_extra.h susie.h sysbase.h system.h
+HEADER = main.h 
 
 # list C++ files here
 #
-COBJS = cart.cpp memmap.cpp mikie.cpp ram.cpp rom.cpp susie.cpp system.cpp main.cpp
-
-#
-# list assembler files here
-SOBJS =
-
+COBJS = main.cpp
 
 SRCFILES = $(HEADER) $(COBJS) $(SOBJS)
 
@@ -71,17 +66,13 @@ new: clean
 	-@rm -f ./build/ColdFire/$(TARGET)
 	$(MAKE) all
 
-
-.SUFFIXES:
-.SUFFIXES: .cpp .S .o
-
-.cpp.o:
-	$(CP) $(CFLAGS) -m68000 -c $*.cpp -o ./build/68000/$*.o
-	$(CP) $(CFLAGS) -m68020-60 -c $*.cpp -o ./build/68020/$*.o
-	$(CP) $(CFLAGS) -mcpu=5475 -c $*.cpp -o ./build/ColdFire/$*.o
+$(OBJS):
 
 $(TARGET): $(OBJS)
+	cd ./core && $(MAKE) all && cd ..
+	$(CP) $(CFLAGS) -m68000 -c main.cpp -o ./build/68000/main.o
+	$(CP) $(CFLAGS) -m68020-60 -c main.cpp -o ./build/68020/main.o
+	$(CP) $(CFLAGS) -mcpu=5475 -c main.cpp -o ./build/ColdFire/main.o
 	$(CC) ./build/68000/*.o -m68000 $(LDLIBS) -o ./build/68000/$(TARGET)
 	$(CC) ./build/68020/*.o -m68020-60 $(LDLIBS) -o ./build/68020/$(TARGET)
 	$(CC) ./build/ColdFire/*.o -mcpu=5475 $(LDLIBS) -o ./build/ColdFire/$(TARGET)
-

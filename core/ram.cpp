@@ -6,7 +6,7 @@
 #include "system.h"
 #include "ram.h"
 
-#include "main.h"
+#include "../main.h"
 
 #define __min(a, b) (((a) < (b)) ? (a) : (b))
 

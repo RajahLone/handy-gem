@@ -942,8 +942,7 @@ ULONG CSusie::PaintSprites(void)
       // Perform Sprite debugging if required, single step on sprite draw
       if(gSingleStepModeSprites)
       {
-        char message[256];
-        sprintf(message,"CSusie:PaintSprites() - Rendered Sprite %03d",sprcount);
+        printf("CSusie:PaintSprites() - Rendered Sprite %03d",sprcount);
         gSingleStepModeSprites=0;
       }
     }

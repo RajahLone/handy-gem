@@ -1,7 +1,7 @@
 #include <cstdlib>
 
 #include "main.h"
-#include "system.h"
+#include "core/system.h"
 
 EXPORT ULONG nextstop = 0;
 

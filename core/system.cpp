@@ -10,7 +10,7 @@ typedef char* STRPTR;
 #include <ctype.h>
 #include <cstdio>
 
-#include "main.h"
+#include "../main.h"
 
 
 CSystem::CSystem(char* gamefile,char* romfile)

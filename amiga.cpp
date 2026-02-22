@@ -2347,7 +2347,7 @@ MODULE void load_images(int first, int last)
           BITMAP_Masking,     (imageinit[i].transparency == TRANSPARENT) ? TRUE : FALSE,
           BITMAP_Transparent, (imageinit[i].transparency == TRANSPARENT) ? TRUE : FALSE,
           End))
-    {   sprintf((char*) errstring, "Can't load %s!", imageinit[i].name);
+    {   snprintf((char*) errstring, "Can't load %s!", imageinit[i].name);
       rq((char*) errstring);
     }   }   }   }
 

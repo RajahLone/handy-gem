@@ -3,7 +3,7 @@
 
 #include <cstring>
 
-#include "main.h"
+#include "../main.h"
 
 #ifdef TRACE_CPU
 
