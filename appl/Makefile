@@ -1,14 +1,14 @@
 #
 # Makefile
 #
-CFLAGS   = -MMD -Wall -Wno-switch -Wno-non-virtual-dtor -O3 -fomit-frame-pointer -ffast-math -g -DMSB_FIRST -DANSI_GCC -DSDL_PATCH -Wno-comment -Wno-parentheses -Wno-stringop-truncation -Wno-mismatched-new-delete -Wno-sequence-point -Wno-maybe-uninitialized -Wno-unused-but-set-variable
+CFLAGS = -MMD -Wall
 
 # list header files here
-HEADER = c65c02.h c6502mak.h cart.h lynxbase.h lynxdef.h machine.h memmap.h mikie.h ram.h rom.h susie.h sysbase.h system.h amiga.h
+HEADER = main.h
 
 # list C++ files here
 #
-COBJS = cart.cpp memmap.cpp mikie.cpp ram.cpp rom.cpp susie.cpp system.cpp amiga.cpp
+COBJS = main.cpp
 
 SRCFILES = $(HEADER) $(COBJS) $(SOBJS)
 

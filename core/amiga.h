@@ -1,3 +1,4 @@
+
 #include <cstdio>
 
 typedef short          BOOL; // from <exec/types.h>

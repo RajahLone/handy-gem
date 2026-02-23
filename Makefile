@@ -3,18 +3,9 @@
 #
 CFLAGS   = -MMD -Wall -Wno-switch -Wno-non-virtual-dtor -O3 -fomit-frame-pointer -ffast-math -g -DMSB_FIRST -DANSI_GCC -DSDL_PATCH -Wno-comment -Wno-parentheses -Wno-stringop-truncation -Wno-mismatched-new-delete -Wno-sequence-point -Wno-maybe-uninitialized -Wno-unused-but-set-variable
 LDFLAGS = -s
-LDLIBS  = -lstdc++
+LDLIBS  = -lgem -lm -lstdc++
 
 TARGET = handy.prg
-
-# list header files here
-HEADER = main.h 
-
-# list C++ files here
-#
-COBJS = main.cpp
-
-SRCFILES = $(HEADER) $(COBJS) $(SOBJS)
 
 #############################
 CROSSPREFIX=/opt/cross-mint/bin/m68k-atari-mint-
@@ -30,8 +21,6 @@ RANLIB = $(CROSSPREFIX)ranlib
 STRIP = $(CROSSPREFIX)strip
 FLAGS = $(CROSSPREFIX)flags
 STACK = $(CROSSPREFIX)stack
-
-OBJS = $(COBJS:.cpp=.o)
 
 all: $(TARGET)
 	$(STRIP) ./build/68000/$(TARGET)
@@ -49,15 +38,9 @@ all: $(TARGET)
 	@echo All done
 
 clean:
-	-@rm -f ./build/68000/*.o
-	-@rm -f ./build/68000/*.d
-	-@rm -f ./build/68000/$(TARGET)
-	-@rm -f ./build/68020/*.o
-	-@rm -f ./build/68020/*.d
-	-@rm -f ./build/68020/$(TARGET)
-	-@rm -f ./build/ColdFire/*.o
-	-@rm -f ./build/ColdFire/*.d
-	-@rm -f ./build/ColdFire/$(TARGET)
+	-@rm -f ./build/68000/*.*
+	-@rm -f ./build/68020/*.*
+	-@rm -f ./build/ColdFire/*.*
 	@echo Cleaned
 
 new: clean
@@ -68,11 +51,9 @@ new: clean
 
 $(OBJS):
 
-$(TARGET): $(OBJS)
+$(TARGET):
 	cd ./core && $(MAKE) all && cd ..
-	$(CP) $(CFLAGS) -m68000 -c main.cpp -o ./build/68000/main.o
-	$(CP) $(CFLAGS) -m68020-60 -c main.cpp -o ./build/68020/main.o
-	$(CP) $(CFLAGS) -mcpu=5475 -c main.cpp -o ./build/ColdFire/main.o
+	cd ./appl && $(MAKE) all && cd ..
 	$(CC) ./build/68000/*.o -m68000 $(LDLIBS) -o ./build/68000/$(TARGET)
 	$(CC) ./build/68020/*.o -m68020-60 $(LDLIBS) -o ./build/68020/$(TARGET)
 	$(CC) ./build/ColdFire/*.o -mcpu=5475 $(LDLIBS) -o ./build/ColdFire/$(TARGET)

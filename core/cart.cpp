@@ -9,7 +9,7 @@
 #define __min(a, b) (((a) < (b)) ? (a) : (b))
 #define __max(a, b) (((a) > (b)) ? (a) : (b))
 
-#include "../main.h"
+#include "amiga.h"
 
 MODULE ULONG crcTable[256];
 

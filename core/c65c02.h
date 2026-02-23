@@ -3,7 +3,7 @@
 
 #include <cstring>
 
-#include "../main.h"
+#include "amiga.h"
 
 #ifdef TRACE_CPU
 
