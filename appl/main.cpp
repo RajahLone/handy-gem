@@ -45,6 +45,14 @@ static char cart_filename[MAXNAMELEN];
 #define VDI_BIT_ORDER_FALCON  1
 #define VDI_BIT_ORDER_INTEL   2
 
+CSystem  *Lynx;
+int16_t viewport_rotate;
+int16_t viewport_width;
+int16_t viewport_height;
+int16_t viewport_pixel_format;
+int16_t viewport_scale;
+
+
 //
 // main
 //
@@ -162,14 +170,61 @@ int main(int argc, char *argv[])
     }
   }
   
- // win init
+  // instanciate handy
+  
+  try { Lynx = new CSystem(cart_pathname, bios_pathname); } catch (...) { goto exit_prg; }
+
+  switch (Lynx->mCart->CartGetRotate())
+  {
+    case 0: viewport_rotate = MIKIE_NO_ROTATE; break; // 1
+    case 1: viewport_rotate = MIKIE_ROTATE_L; break;  // 2
+    case 2: viewport_rotate = MIKIE_ROTATE_R; break;  // 3
+  }
+  switch (viewport_rotate)
+  {
+    case MIKIE_NO_ROTATE:
+      viewport_width  = 160;
+      viewport_height = 102;
+      break;
+    case MIKIE_ROTATE_L:
+    case MIKIE_ROTATE_R:
+      viewport_width  = 102;
+      viewport_height = 160;
+      break;
+  }
+  // TODO: vdi_pixel_format <- VDI_BIT_ORDER_INTEL, VDI_BIT_ORDER_FALCON;
+  switch(vdi_bpp)
+  {
+    case 15:
+      if (vdi_pixel_format == VDI_BIT_ORDER_INTEL) { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_555; }
+      else { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_555; }
+      break;
+    case 16:
+      if (vdi_pixel_format == VDI_BIT_ORDER_FALCON) { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_555; }
+      else if (vdi_pixel_format == VDI_BIT_ORDER_INTEL) { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_565; }
+      else { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_565; }
+      break;
+    case 24:
+      if (vdi_pixel_format == VDI_BIT_ORDER_INTEL) { viewport_pixel_format = MIKIE_PIXEL_FORMAT_24BPP; }
+      else { viewport_pixel_format = MIKIE_PIXEL_FORMAT_24BPP; }
+      break;
+    case 32:
+      if (vdi_pixel_format == VDI_BIT_ORDER_INTEL) { viewport_pixel_format = MIKIE_PIXEL_FORMAT_32BPP; }
+      else { viewport_pixel_format = MIKIE_PIXEL_FORMAT_32BPP; }
+      break;
+  }
+
+  Lynx->DisplaySetAttributes(viewport_rotate, viewport_pixel_format, ROUNDTOLONG(viewport_width));
+
+  // win init
  
   wind_get(0, WF_WORKXYWH, &desk.g_x, &desk.g_y, &desk.g_w, &desk.g_h);
   
-  wx = desk.g_x + ((desk.g_w - 160) / 2);
-  wy = desk.g_y + ((desk.g_h - 102) / 2);
-  ww = 160;
-  wh = 102;
+  wx = desk.g_x + ((desk.g_w - viewport_width) / 2);
+  wy = desk.g_y + ((desk.g_h - viewport_height) / 2);
+
+  ww = viewport_width;
+  wh = viewport_height;
   
   win_handle = wind_create(NAME | CLOSER | MOVER | FULLER, wx, wy, ww, wh);
   
@@ -187,7 +242,7 @@ int main(int argc, char *argv[])
     int16_t msg[8];
     int16_t mouse_event;
     int16_t mousex, mousey, mouseb;
-    int16_t kstate, kc;
+    int16_t kstate, kc, i;
 
     ev_which = evnt_multi(
                           MU_MESAG | MU_TIMER | MU_KEYBD | MU_BUTTON,
@@ -264,12 +319,17 @@ int main(int argc, char *argv[])
     {
 			if ((prevkc != kc) || (prevks != kstate))
       {
+        prevkc = kc;
+        prevks = kstate;
+
         // TODO: keyboard events
 			}
     }
     if (ev_which & MU_TIMER)
     {
-      // TODO: background tasks
+      // TODO: timer and delays
+      
+      for (i = 1024; i; i--) { Lynx->Update(); }
     }
   }
   
