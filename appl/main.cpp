@@ -3,18 +3,83 @@
  */
 
 #include <stdio.h>
-#include <sys/types.h>
+#include <stdint.h>
 
 #include <gem.h>
 #include <mint/osbind.h>
+#include <mint/mintbind.h>
 #include <mint/cookie.h>
+#include <mint/ssystem.h>
 
 #include "main.h"
 #include "../core/system.h"
 
-static const char *app_name = "Handy";
+static const char *APPL_NAME = "Handy";
+static const char *BIOS_NAME = "lynxboot.img";
+static const char *TITL_CART = "Select cartridge image file...";
 
+static const char *ALERT_BIOS_NOT_FOUND = "[1][lynxboot.img not found.|Put it besides the program.][ Ok ]";
+static const char *ALERT_FSEL_ISSUE = "[1][Could not open fileselector.][ Ok ]";
 
+#define MAXPATHLEN 512
+#define MAXNAMELEN 128
+
+static char appl_pathname[MAXPATHLEN];
+static char bios_pathname[MAXPATHLEN];
+static char cart_pathname[MAXPATHLEN];
+static char cart_filename[MAXNAMELEN];
+
+//
+// tools
+//
+
+int16_t fsel_cart(char *path, char *name, int16_t *button, const char *label)
+{
+  int16_t ret;
+  
+  wind_update(BEG_MCTRL);
+  if (_AESversion < 0x0104) { ret = fsel_input(path, name, button); } else { ret = fsel_exinput(path, name, button, (char *)label); }
+  wind_update(END_MCTRL);
+      
+  return(ret);
+}
+
+// from MS copilot
+int16_t has_extension(const char *filename, const char *ext)
+{
+  const char *dot = strrchr(filename, '.');
+  if (dot == NULL) { return 0; }
+  return (strcasecmp(dot, ext) == 0);
+}
+
+// from libcmini
+int16_t get_current_dir(int16_t drive, char *path) { int ret = Dgetpath(path, drive); if (ret < 0) { ret = -1; } return ret; }
+
+// from Daroou's sources
+uint32_t get_cookie_table_ptr(void) { return (*((uint32_t *)0x5A0L)); }
+uint32_t *get_cookie_table(void) { return ((uint32_t *)Supexec(get_cookie_table_ptr)); }
+int16_t get_cookie(const uint32_t cookie_id, uint32_t *cookie_val)
+{
+  *cookie_val = 0;
+
+  int32_t ret = Ssystem(S_GETCOOKIE, cookie_id, 0);
+  
+  if (ret == -1) { return 0; }
+  
+  if (ret != -32) { *cookie_val = ret; return 1; }
+
+  uint32_t *cookie_lst = get_cookie_table();
+
+  if (cookie_lst == (void *)0) { return 0; }
+
+  while (*cookie_lst) { if( *cookie_lst == cookie_id) { *cookie_val = *(cookie_lst + 1); return 1; } cookie_lst += 2; }
+
+  return 0;
+}
+
+//
+// main
+//
 
 int main(int argc, char *argv[])
 {
@@ -32,9 +97,31 @@ int main(int argc, char *argv[])
   int16_t vdi_bpp;
   int16_t work_in[12], work_out[272];
 
-  ap_id = appl_init(); if (ap_id < 0) { return -1; }
+  uint32_t dummy2;
+  int16_t modern_aes;
+  int16_t argv_len;
+  int16_t fsel_button;
   
+  // app init
+
+  ap_id = appl_init(); if (ap_id < 0) { return -1; }
+    
  	graf_mouse(ARROW, NULL);
+  get_current_dir(0, appl_pathname);
+ 
+  modern_aes = 0;
+  
+  if (get_cookie(C_MiNT, &dummy2)) { modern_aes = 1; }
+  else
+  if (get_cookie(C_MagX, &dummy2)) { modern_aes = 1; }
+  
+  if (modern_aes)
+  {
+    shel_write(9, 1, 1, "", "");
+    Pdomain(1);
+  }
+
+  // vdi init
 
   vdi_handle = graf_handle(&dummy, &dummy, &dummy, &dummy); if (vdi_handle < 1) { return -2; }
 
@@ -51,6 +138,46 @@ int main(int argc, char *argv[])
 	vsf_interior(vdi_handle, 1);
 	vsf_perimeter(vdi_handle, 0);
 	
+  // find bios rom
+  
+  strcpy(bios_pathname, BIOS_NAME);
+  
+  if (!shel_find(bios_pathname)) { form_alert(1, ALERT_BIOS_NOT_FOUND);  goto exit_prg; }
+	
+  // find cart rom: in argv or use fileselector
+  
+  cart_pathname[0] = 0;
+  
+  if (argc > 1)
+  {
+    argv_len = strlen(argv[1]);
+    if ((argv_len > 0) && (argv_len < MAXPATHLEN))
+    {
+      if (has_extension(argv[1], ".lnx")) { strcpy(cart_pathname, argv[1]); }
+    }
+  }
+  
+  if (strlen(cart_pathname) == 0)
+  {
+    strcpy(cart_pathname, appl_pathname);
+    strcat(cart_pathname, "\\*.lnx");
+
+    if (fsel_cart(cart_pathname, cart_filename, &fsel_button, TITL_CART) == 0) { form_alert(1, ALERT_FSEL_ISSUE); goto exit_prg; }
+    
+    if (fsel_button == 0) { goto exit_prg; }
+
+    if (cart_pathname[0] && cart_filename[0])
+    {
+      argv_len = strlen(cart_pathname);
+      while ( cart_pathname[argv_len - 1] != '\\' ) { --argv_len; }
+      cart_pathname[argv_len] = 0;
+      strcat(cart_pathname, cart_filename);
+      
+      if (!has_extension(cart_pathname, ".lnx")) { goto exit_prg; }
+    }
+  }
+  
+ // win init
  
   wind_get(0, WF_WORKXYWH, &desk.g_x, &desk.g_y, &desk.g_w, &desk.g_h);
   
@@ -63,10 +190,11 @@ int main(int argc, char *argv[])
   
   if (win_handle < 0) { appl_exit(); return -1; }
   
-  wind_set(win_handle, WF_NAME, (int16_t)(((unsigned long)app_name)>>16), (int16_t)(((unsigned long)app_name) & 0xffff), 0, 0);
+  wind_set(win_handle, WF_NAME, (int16_t)(((unsigned long)APPL_NAME)>>16), (int16_t)(((unsigned long)APPL_NAME) & 0xffff), 0, 0);
   
   wind_open(win_handle, wx, wy, ww, wh);
   
+  // main loop
   
   while (1)
   {
@@ -161,10 +289,10 @@ int main(int argc, char *argv[])
   }
   
 exit_app:
-
   wind_close(win_handle);
   wind_delete(win_handle);
   
+exit_prg:
   v_clsvwk(vdi_handle);
   appl_exit();
 
