@@ -10,9 +10,10 @@
 
 EXPORT ULONG nextstop = 0;
 
-EXPORT void say(STRPTR text)
+EXPORT void say(STRPTR text) // TODO: outputs to logfile u:\ram\handy.log if MiNT
 {
   printf(text);
+  printf("\n");
 }
 
 EXPORT void flipulong(ULONG* theaddress)
