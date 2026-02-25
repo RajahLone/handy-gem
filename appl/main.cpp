@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include <gem.h>
+#include <gemx.h>
 #include <mint/osbind.h>
 #include <mint/mintbind.h>
 #include <mint/cookie.h>
@@ -24,20 +25,25 @@ static const char *APPL_NAME = "Handy";
 static const char *BIOS_NAME = "lynxboot.img";
 static const char *TITL_CART = "Select cartridge image file...";
 
-static const char *ALERT_BIOS_NOT_FOUND = "[1][lynxboot.img not found.|Put it besides the program.][ Ok ]";
-static const char *ALERT_FSEL_ISSUE = "[1][Could not open fileselector.][ Ok ]";
-
-#define MAXPATHLEN 512
-#define MAXNAMELEN 128
+static const char *ALERT_BIOS_NOT_FOUND = "[1][lynxboot.img not found.|Put it besides the program.][ Quit ]";
+static const char *ALERT_FSEL_ISSUE = "[1][Could not open fileselector.][ Quit ]";
+static const char *ALERT_NO_SOFTWARE_CLUT = "[1][HC15 to TC32 screenmode only.][ Quit ]";
 
 //
 // global variables
 //
 
+#define MAXPATHLEN 512
+#define MAXNAMELEN 128
+
 static char appl_pathname[MAXPATHLEN];
 static char bios_pathname[MAXPATHLEN];
 static char cart_pathname[MAXPATHLEN];
 static char cart_filename[MAXNAMELEN];
+
+#define VDI_BIT_ORDER_CLASSIC 0
+#define VDI_BIT_ORDER_FALCON  1
+#define VDI_BIT_ORDER_INTEL   2
 
 //
 // main
@@ -58,6 +64,7 @@ int main(int argc, char *argv[])
   int16_t vdi_handle, dummy;
   int16_t vdi_bpp;
   int16_t work_in[12], work_out[272];
+  uint16_t vdi_pixel_format;
 
   uint32_t dummy2;
   int16_t modern_aes;
@@ -95,16 +102,32 @@ int main(int argc, char *argv[])
 
 	vq_extnd(vdi_handle, 1, work_out);
 	vdi_bpp = work_out[4];
- 
+  vdi_pixel_format = VDI_BIT_ORDER_CLASSIC;
+
  	vsf_color(vdi_handle, 0);
 	vsf_interior(vdi_handle, 1);
 	vsf_perimeter(vdi_handle, 0);
-	
+ 
+  if (get_cookie(C_EdDI, &dummy2))
+  {
+    vq_scrninfo(vdi_handle, work_out);
+    
+    vdi_bpp = work_out[2];
+    
+    if (work_out[1] != 2) { form_alert(1, ALERT_NO_SOFTWARE_CLUT); goto exit_prg; }
+    
+    if ((work_out[14] & 2) && (vdi_bpp < 24)) { vdi_pixel_format = VDI_BIT_ORDER_FALCON; }
+    
+    if (work_out[14] & 128) { vdi_pixel_format = VDI_BIT_ORDER_INTEL; }
+  }
+  
+  if (vdi_bpp < 15) { form_alert(1, ALERT_NO_SOFTWARE_CLUT); goto exit_prg; }
+ 
   // find bios rom
   
   strcpy(bios_pathname, BIOS_NAME);
   
-  if (!shel_find(bios_pathname)) { form_alert(1, ALERT_BIOS_NOT_FOUND);  goto exit_prg; }
+  if (!shel_find(bios_pathname)) { form_alert(1, ALERT_BIOS_NOT_FOUND); goto exit_prg; }
 	
   // find cart rom: in argv or use fileselector
   
