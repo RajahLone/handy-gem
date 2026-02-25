@@ -34,7 +34,7 @@ CCart::CCart(UBYTE* gamedata, ULONG gamesize)
     header.page_size_bank0 = ((header.page_size_bank0>>8) | (header.page_size_bank0<<8));
     header.page_size_bank1 = ((header.page_size_bank1>>8) | (header.page_size_bank1<<8));
     header.version         = ((header.version>>8) | (header.version<<8));
-    
+        
     // Sanity checks on the header
     
     if(header.magic[0]!='L' || header.magic[1]!='Y' || header.magic[2]!='N' || header.magic[3]!='X' || header.version!=1)
@@ -72,33 +72,38 @@ CCart::CCart(UBYTE* gamedata, ULONG gamesize)
   
   CTYPE banktype0,banktype1;
   
-  switch (header.page_size_bank0)
+  switch(header.page_size_bank0)
   {
     case 0x000:
       banktype0    = ZUNUSED;
       mMaskBank0   = 0;
       mShiftCount0 = 0;
       mCountMask0  = 0;
+      break;
     case 0x100:
       banktype0    = C64K;
       mMaskBank0   = 0x00ffff;
       mShiftCount0 = 8;
       mCountMask0  = 0x0ff;
+      break;
     case 0x200:
       banktype0    = C128K;
       mMaskBank0   = 0x01ffff;
       mShiftCount0 = 9;
       mCountMask0  = 0x1ff;
+      break;
     case 0x400:
       banktype0    = C256K;
       mMaskBank0   = 0x03ffff;
       mShiftCount0 = 10;
       mCountMask0  = 0x3ff;
+      break;
     case 0x800:
       banktype0    = C512K;
       mMaskBank0   = 0x07ffff;
       mShiftCount0 = 11;
       mCountMask0  = 0x7ff;
+      break;
     default:
       say((STRPTR) "File format invalid (bank 0)!");
       throw 0;
