@@ -11,6 +11,7 @@ typedef char* STRPTR;
 #include <cstdio>
 
 #include "amiga.h"
+#include "../appl/main.h"
 
 
 CSystem::CSystem(char* gamefile,char* romfile)

@@ -56,3 +56,21 @@ int16_t get_cookie(const uint32_t cookie_id, uint32_t *cookie_val)
 
   return 0;
 }
+
+// from Anders Granlund (ScummST Atari port)
+uint16_t Mxmask(void)
+{
+  uint16_t mxmask = 0xFFFF;
+  
+  int32_t sRAM  = (int32_t) Mxalloc( -1, 0);
+  int32_t sRAMg = (int32_t) Mxalloc( -1, 0x40); /* In error case Mxalloc( -1, 3) */
+  int32_t aRAM  = (int32_t) Mxalloc( -1, 1);
+  int32_t aRAMg = (int32_t) Mxalloc( -1, 0x41); /* In error case Mxalloc( -1, 3) */
+  
+  if (sRAM == -32) { mxmask = 0x0000; /* Mxalloc is not implemented */ }
+  else if ( ((sRAM + aRAM) == sRAMg) && ((sRAM + aRAM) == aRAMg) ) { mxmask = 0x0003; /* oldfashion Mxalloc() */ }
+  else { mxmask = 0xFFFF; /* newfashion Mxalloc() */ }
+    
+  return mxmask;
+}
+

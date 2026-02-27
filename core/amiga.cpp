@@ -111,32 +111,3 @@ EXPORT int lss_read(void* dest, int varsize, int varcount, LSS_FILE* fp, UBYTE f
   
   return copysize;
 }
-
-EXPORT UBYTE* vbuffer = NULL;
-
-EXPORT UBYTE* displaycallback(void) // TODO
-{
-  /*if (use_audio)
-   {
-   while (p != gAudioBufferPointer)
-   {
-   if (curpos >= AUDIO_BUFFER)
-   {
-   ahi_play_samples(audiobuf, SAMPLES, NOTIME, DOWAIT);
-   curpos = 0;
-   }
-   
-   audiobuf[curpos] = gAudioBuffer[p]-128;
-   curpos++;
-   p++;
-   
-   if (p >= HANDY_AUDIO_BUFFER_SIZE) { p = 0; }
-   }
-   }*/
-  
-  //check_keyboard_status();
-  //refresh();
-  //mFrameCount++;
-  
-  return vbuffer;
-}
