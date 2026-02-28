@@ -58,9 +58,19 @@ uint32_t  viewport_size;
 uintptr_t viewport_temp;
 uint8_t   *viewport_buffer;
 
+int16_t vdi_handle;
+uint16_t screen_width;
+uint16_t screen_height;
+
+#define WIN_COMPONENTS NAME | CLOSER | MOVER /*| FULLER*/
+int16_t win_handle;
+
 MFDB viewport_mfdb;
 MFDB screen_mfdb;
 int16_t viewport_pxy[8];
+
+#define HANDY_BASE_FPS 60
+int32_t mFrameSkip = 0;
 
 //
 //
@@ -93,6 +103,116 @@ uint8_t* displaycallback(void) // TODO
   return viewport_buffer;
 }
 
+// from handy_sdl and win32 original
+int16_t handy_core_update(void)
+{
+  // Throttling code
+  if (gSystemCycleCount > gThrottleNextCycleCheckpoint)
+  {
+    static int limiter = 0;
+    static int flipflop = 0;
+    
+    int overrun = gSystemCycleCount - gThrottleNextCycleCheckpoint;
+    
+    int nextstep = (((HANDY_SYSTEM_FREQ/HANDY_BASE_FPS)*gThrottleMaxPercentage)/100);
+    
+    // We've gone thru the checkpoint, so therefore the we must have reached the next timer tick, if the timer hasnt ticked then we've got here early.
+    // If so then put the system to sleep by saying there is no more idle work to be done in the idle loop
+    
+    if (gThrottleLastTimerCount == gTimerCount)
+    {
+      // All we know is that we got here earlier than expected as the counter has not yet rolled over
+      if( limiter<0) { limiter=0; } else { limiter++; }
+      
+      if (limiter > 40 && mFrameSkip > 0) { mFrameSkip--; limiter=0; }
+      
+      flipflop = 1;
+      return 0;
+    }
+    
+    // Frame Skip adjustment
+    if (!flipflop)
+    {
+      if (limiter > 0) { limiter = 0; } else { limiter--; }
+      
+      if (limiter < -7 && mFrameSkip < 10) { mFrameSkip++; limiter=0; }
+    }
+    
+    flipflop=0;
+    
+    //Set the next control point
+    gThrottleNextCycleCheckpoint += nextstep;
+    
+    // Set next timer checkpoint
+    gThrottleLastTimerCount = gTimerCount;
+    
+    // Check if we've overstepped the speed limit
+    if (overrun > nextstep)
+    {
+      // We've exceeded the next timepoint, going way too fast (sprite drawing) so reschedule.
+      return 0;
+    }
+  }
+  
+  return 1;
+}
+
+void win_redraw(int16_t rx, int16_t ry, int16_t rw, int16_t rh)
+{
+  int16_t redraw_pxy[4], window_pxy[4], todo_pxy[4];
+
+  wind_update(BEG_UPDATE);
+  v_hide_c(vdi_handle);
+  
+  wind_get(win_handle, WF_WORKXYWH, &window_pxy[0], &window_pxy[1], &window_pxy[2], &window_pxy[3]);
+  
+  wind_get(win_handle, WF_FIRSTXYWH, &todo_pxy[0], &todo_pxy[1], &todo_pxy[2], &todo_pxy[3]);
+  
+  if ((todo_pxy[0] + todo_pxy[2] - 1) > screen_width) { todo_pxy[2] = screen_width - todo_pxy[0]; }
+  if ((todo_pxy[1] + todo_pxy[3] - 1) > screen_height) { todo_pxy[3] = screen_height - todo_pxy[1]; }
+  
+  if (rw == 0 || rh == 0)
+  {
+    redraw_pxy[0] = window_pxy[0];
+    redraw_pxy[1] = window_pxy[1];
+    redraw_pxy[2] = window_pxy[2];
+    redraw_pxy[3] = window_pxy[3];
+  }
+  else
+  {
+    redraw_pxy[0] = rx;
+    redraw_pxy[1] = ry;
+    redraw_pxy[2] = rw;
+    redraw_pxy[3] = rh;
+  }
+  
+  while (todo_pxy[2] && todo_pxy[3])
+  {
+    if (rc_intersect((GRECT *)redraw_pxy, (GRECT *)todo_pxy))
+    {
+      viewport_pxy[0] = (todo_pxy[0] - window_pxy[0]);
+      viewport_pxy[1] = (todo_pxy[1] - window_pxy[1]);
+      viewport_pxy[2] = MIN(todo_pxy[2], viewport_width) + viewport_pxy[0] - 1;
+      viewport_pxy[3] = MIN(todo_pxy[3], viewport_height) + viewport_pxy[1] - 1;
+      
+      viewport_pxy[4] = todo_pxy[0];
+      viewport_pxy[5] = todo_pxy[1];
+      viewport_pxy[6] = MIN(todo_pxy[2], viewport_width) + viewport_pxy[4] - 1;
+      viewport_pxy[7] = MIN(todo_pxy[3], viewport_height) + viewport_pxy[5] - 1;
+      
+      vro_cpyfm(vdi_handle, S_ONLY, viewport_pxy, &viewport_mfdb, &screen_mfdb);
+    }
+    
+    wind_get(win_handle, WF_NEXTXYWH, &todo_pxy[0], &todo_pxy[1], &todo_pxy[2], &todo_pxy[3]);
+    
+    if ((todo_pxy[0] + todo_pxy[2] - 1) > screen_width) { todo_pxy[2] = screen_width - todo_pxy[0]; }
+    if ((todo_pxy[1] + todo_pxy[3] - 1) > screen_height) { todo_pxy[3] = screen_height - todo_pxy[1]; }
+  }
+  
+  wind_update(END_UPDATE);
+  v_show_c(vdi_handle,1);
+}
+
 //
 // main
 //
@@ -101,24 +221,26 @@ int main(int argc, char *argv[])
 {
   int16_t ap_id;
   
-  int16_t win_handle;
-  GRECT desk;
+  int16_t dx, dy, dw, dh;
   int16_t wx, wy, ww, wh;
+  int16_t ox, oy, ow, oh;
    
  	int16_t prevkc, prevks;
 	
   static int16_t maskmouseb = 0;
   
-  int16_t vdi_handle, dummy;
+  int16_t dummy;
   int16_t vdi_bpp;
   int16_t work_in[12], work_out[272];
-  uint16_t vdi_pixel_format, screen_width, screen_height;
-  int16_t redraw_pxy[4], window_pxy[4], todo_pxy[4];
+  uint16_t vdi_pixel_format;
 
   uint32_t dummy2;
   int16_t modern_aes;
   int16_t argv_len;
   int16_t fsel_button;
+  
+  uint16_t loop;
+  uint16_t viewport_pitch;
   
   // app init
 
@@ -248,23 +370,27 @@ int main(int argc, char *argv[])
     case 15:
       if (vdi_pixel_format == VDI_BIT_ORDER_INTEL) { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_555; }
       else { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_555; }
+      viewport_pitch = 2;
       break;
     case 16:
       if (vdi_pixel_format == VDI_BIT_ORDER_FALCON) { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_555; }
       else if (vdi_pixel_format == VDI_BIT_ORDER_INTEL) { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_565; }
       else { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_565; }
+      viewport_pitch = 2;
       break;
     case 24:
       if (vdi_pixel_format == VDI_BIT_ORDER_INTEL) { viewport_pixel_format = MIKIE_PIXEL_FORMAT_24BPP; }
       else { viewport_pixel_format = MIKIE_PIXEL_FORMAT_24BPP; }
+      viewport_pitch = 3;
       break;
     case 32:
       if (vdi_pixel_format == VDI_BIT_ORDER_INTEL) { viewport_pixel_format = MIKIE_PIXEL_FORMAT_32BPP; }
       else { viewport_pixel_format = MIKIE_PIXEL_FORMAT_32BPP; }
+      viewport_pitch = 4;
       break;
   }
 
-  Lynx->DisplaySetAttributes(viewport_rotate, viewport_pixel_format, ROUNDTOLONG(viewport_width));
+  Lynx->DisplaySetAttributes(viewport_rotate, viewport_pixel_format, ROUNDTOLONG(viewport_width) * viewport_pitch);
 
   // allocate memory for viewport
 
@@ -287,23 +413,28 @@ int main(int argc, char *argv[])
 
   // win init
  
-  wind_get(0, WF_WORKXYWH, &desk.g_x, &desk.g_y, &desk.g_w, &desk.g_h);
+  wind_get(0, WF_WORKXYWH, &dx, &dy, &dw, &dh);
   
-  wx = desk.g_x + ((desk.g_w - viewport_width) / 2);
-  wy = desk.g_y + ((desk.g_h - viewport_height) / 2);
+  wx = dx + ((dw - viewport_width) / 2);
+  wy = dy + ((dh - viewport_height) / 2);
   ww = viewport_width;
   wh = viewport_height;
   
-  screen_width = desk.g_x + desk.g_w;
-  screen_height = desk.g_y + desk.g_h;
+  screen_width = dx + dw;
+  screen_height = dy + dh;
   
-  win_handle = wind_create(NAME | CLOSER | MOVER | FULLER, wx, wy, ww, wh);
+  wind_calc(0, WIN_COMPONENTS, wx, wy, ww, wh, &ox, &oy, &ow, &oh);
+  
+  ox = MAX(ox, dx + 1);
+  oy = MAX(oy, dy + 1);
+
+  win_handle = wind_create(WIN_COMPONENTS, ox, oy, ow, oh);
   
   if (win_handle < 0) { appl_exit(); return -1; }
   
   wind_set(win_handle, WF_NAME, (int16_t)(((unsigned long)APPL_NAME)>>16), (int16_t)(((unsigned long)APPL_NAME) & 0xffff), 0, 0);
   
-  wind_open(win_handle, wx, wy, ww, wh);
+  wind_open(win_handle, ox, oy, ow, oh);
   
   // main loop
   
@@ -313,7 +444,7 @@ int main(int argc, char *argv[])
     int16_t msg[8];
     int16_t mouse_event;
     int16_t mousex, mousey, mouseb;
-    int16_t kstate, kc, i;
+    int16_t kstate, kc;
 
     ev_which = evnt_multi(
                           MU_MESAG | MU_TIMER | MU_KEYBD | MU_BUTTON,
@@ -338,7 +469,7 @@ int main(int argc, char *argv[])
           goto exit_app;
           
         case WM_MOVED:
-          if (msg[3] == win_handle) { wind_set(win_handle, WF_CURRXYWH, msg[4], msg[5], msg[6], msg[7]); }
+          if (msg[3] == win_handle) { wind_set(win_handle, WF_CURRXYWH, MAX(dx + 1, msg[4]), MAX(dy + 1, msg[5]), msg[6], msg[7]); }
           break;
           
         case WM_TOPPED:
@@ -346,49 +477,7 @@ int main(int argc, char *argv[])
           break;
 
         case WM_REDRAW:
-          if (msg[3] == win_handle)
-          {
-            wind_update(BEG_UPDATE);
-            v_hide_c(vdi_handle);
-
-            wind_get(win_handle, WF_WORKXYWH, &window_pxy[0], &window_pxy[1], &window_pxy[2], &window_pxy[3]);
-            
-            wind_get(win_handle, WF_FIRSTXYWH, &todo_pxy[0], &todo_pxy[1], &todo_pxy[2], &todo_pxy[3]);
-            
-            if ((todo_pxy[0] + todo_pxy[2] - 1) > screen_width) { todo_pxy[2] = screen_width - todo_pxy[0]; }
-            if ((todo_pxy[1] + todo_pxy[3] - 1) > screen_height) { todo_pxy[3] = screen_height - todo_pxy[1]; }
-            
-            redraw_pxy[0] = msg[4];
-            redraw_pxy[1] = msg[5];
-            redraw_pxy[2] = msg[6];
-            redraw_pxy[3] = msg[7];
-
-            while (todo_pxy[2] && todo_pxy[3])
-            {
-              if (rc_intersect((GRECT *)redraw_pxy, (GRECT *)todo_pxy))
-              {
-                viewport_pxy[0] = (todo_pxy[0] - window_pxy[0]);
-                viewport_pxy[1] = (todo_pxy[1] - window_pxy[1]);
-                viewport_pxy[2] = MIN(todo_pxy[2], viewport_width) + viewport_pxy[0] - 1;
-                viewport_pxy[3] = MIN(todo_pxy[3], viewport_height) + viewport_pxy[1] - 1;
-                
-                viewport_pxy[4] = todo_pxy[0];
-                viewport_pxy[5] = todo_pxy[1];
-                viewport_pxy[6] = MIN(todo_pxy[2], viewport_width) + viewport_pxy[4] - 1;
-                viewport_pxy[7] = MIN(todo_pxy[3], viewport_height) + viewport_pxy[5] - 1;
- 
-                vro_cpyfm(vdi_handle, S_ONLY, viewport_pxy, &viewport_mfdb, &screen_mfdb);
-              }
-              
-              wind_get(win_handle, WF_NEXTXYWH, &todo_pxy[0], &todo_pxy[1], &todo_pxy[2], &todo_pxy[3]);
-
-              if ((todo_pxy[0] + todo_pxy[2] - 1) > screen_width) { todo_pxy[2] = screen_width - todo_pxy[0]; }
-              if ((todo_pxy[1] + todo_pxy[3] - 1) > screen_height) { todo_pxy[3] = screen_height - todo_pxy[1]; }
-            }
-            
-            wind_update(END_UPDATE);
-            v_show_c(vdi_handle,1);
-          }
+          if (msg[3] == win_handle) { win_redraw(msg[4], msg[5], msg[6], msg[7]); }
           break;
       }
     }
@@ -409,9 +498,35 @@ int main(int argc, char *argv[])
     }
     if (ev_which & MU_TIMER)
     {
-      // TODO: timer and delays
+      // TODO: fix timers managment (currently too slow)
+      
+      // Update TimerCount
+      gTimerCount++;
 
-      for (i = 1024; i; i--) { Lynx->Update(); }
+      while (handy_core_update())
+      {
+        if (!gSystemHalt)
+        {
+          //extern SDL_mutex *sound_mutex;
+          //extern SDL_cond *sound_cv;
+          
+          // synchronize by sound samples
+          //SDL_LockMutex(sound_mutex);
+          for (loop = 256; loop; loop--)
+          {
+            //if (Throttle) { while (gAudioBufferPointer >= HANDY_AUDIO_BUFFER_SIZE/2) { SDL_CondWait(sound_cv, sound_mutex); } }
+            Lynx->Update();
+          }
+          //SDL_CondSignal(sound_cv);
+          //++SDL_UnlockMutex(sound_mutex);
+        }
+        else
+        {
+          gTimerCount++;
+        }
+      }
+
+      win_redraw(0, 0, 0, 0);
     }
   }
   
