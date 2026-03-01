@@ -33,7 +33,7 @@ int16_t has_extension(const char *filename, const char *ext)
 }
 
 // from libcmini
-int16_t get_current_dir(int16_t drive, char *path) { int ret = Dgetpath(path, drive); if (ret < 0) { ret = -1; } return ret; }
+int16_t get_current_dir(int16_t drive, char *path) { int16_t ret = Dgetpath(path, drive); if (ret < 0) { ret = -1; } return ret; }
 
 // from Daroou's sources
 uint32_t get_cookie_table_ptr(void) { return (*((uint32_t *)0x5A0L)); }
@@ -74,3 +74,6 @@ uint16_t Mxmask(void)
   return mxmask;
 }
 
+// from Daroou's sources
+uint32_t get_long_0x4ba(void) {	return (*((uint32_t *)0x4BA)); }
+uint32_t get_timer(void) { return (Supexec(get_long_0x4ba)); }

@@ -102,7 +102,7 @@ enum
   MIKIE_PIXEL_FORMAT_32BPP,
 };
 
-extern unsigned long nextstop;
+extern ULONG nextstop;
 
 class CMikie : public CLynxBase
 {

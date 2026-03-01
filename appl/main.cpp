@@ -34,7 +34,7 @@ static const char *ALERT_NOT_ENOUGH_RAM = "[1][Not enough memory for Lynx screen
 // global variables
 //
 
-static uint16_t mxMask = 0xFFFF;
+uint16_t mxMask = 0xFFFF;
 
 #define MAXPATHLEN 512
 #define MAXNAMELEN 128
@@ -48,119 +48,33 @@ static char cart_filename[MAXNAMELEN];
 #define VDI_BIT_ORDER_FALCON  1
 #define VDI_BIT_ORDER_INTEL   2
 
-CSystem   *Lynx;
-int16_t   viewport_rotate;
-int16_t   viewport_width;
-int16_t   viewport_height;
-int16_t   viewport_pixel_format;
-int16_t   viewport_scale;
-uint32_t  viewport_size;
-uintptr_t viewport_temp;
-uint8_t   *viewport_buffer;
+static CSystem   *Lynx;
+static int16_t   viewport_rotate;
+static int16_t   viewport_width;
+static int16_t   viewport_height;
+static int16_t   viewport_pixel_format;
+//static int16_t   viewport_scale;
+static uint32_t  viewport_size;
+static uintptr_t viewport_temp;
+static uint8_t   *viewport_buffer;
 
-int16_t vdi_handle;
-uint16_t screen_width;
-uint16_t screen_height;
+static int16_t vdi_handle;
+static uint16_t screen_width;
+static uint16_t screen_height;
 
 #define WIN_COMPONENTS NAME | CLOSER | MOVER /*| FULLER*/
-int16_t win_handle;
-
-MFDB viewport_mfdb;
-MFDB screen_mfdb;
-int16_t viewport_pxy[8];
-
-#define HANDY_BASE_FPS 60
-int32_t mFrameSkip = 0;
+static int16_t win_handle;
+static int16_t redraw_pxy[4], window_pxy[4], todo_pxy[4];
+static MFDB viewport_mfdb;
+static MFDB screen_mfdb;
+static int16_t viewport_pxy[8];
 
 //
+// contents redraw
 //
-//
-
-uint8_t* displaycallback(void) // TODO
-{
-  /*if (use_audio)
-   {
-   while (p != gAudioBufferPointer)
-   {
-   if (curpos >= AUDIO_BUFFER)
-   {
-   ahi_play_samples(audiobuf, SAMPLES, NOTIME, DOWAIT);
-   curpos = 0;
-   }
-   
-   audiobuf[curpos] = gAudioBuffer[p]-128;
-   curpos++;
-   p++;
-   
-   if (p >= HANDY_AUDIO_BUFFER_SIZE) { p = 0; }
-   }
-   }*/
-  
-  //check_keyboard_status();
-  //refresh();
-  //mFrameCount++;
-  
-  return viewport_buffer;
-}
-
-// from handy_sdl and win32 original
-int16_t handy_core_update(void)
-{
-  // Throttling code
-  if (gSystemCycleCount > gThrottleNextCycleCheckpoint)
-  {
-    static int limiter = 0;
-    static int flipflop = 0;
-    
-    int overrun = gSystemCycleCount - gThrottleNextCycleCheckpoint;
-    
-    int nextstep = (((HANDY_SYSTEM_FREQ/HANDY_BASE_FPS)*gThrottleMaxPercentage)/100);
-    
-    // We've gone thru the checkpoint, so therefore the we must have reached the next timer tick, if the timer hasnt ticked then we've got here early.
-    // If so then put the system to sleep by saying there is no more idle work to be done in the idle loop
-    
-    if (gThrottleLastTimerCount == gTimerCount)
-    {
-      // All we know is that we got here earlier than expected as the counter has not yet rolled over
-      if( limiter<0) { limiter=0; } else { limiter++; }
-      
-      if (limiter > 40 && mFrameSkip > 0) { mFrameSkip--; limiter=0; }
-      
-      flipflop = 1;
-      return 0;
-    }
-    
-    // Frame Skip adjustment
-    if (!flipflop)
-    {
-      if (limiter > 0) { limiter = 0; } else { limiter--; }
-      
-      if (limiter < -7 && mFrameSkip < 10) { mFrameSkip++; limiter=0; }
-    }
-    
-    flipflop=0;
-    
-    //Set the next control point
-    gThrottleNextCycleCheckpoint += nextstep;
-    
-    // Set next timer checkpoint
-    gThrottleLastTimerCount = gTimerCount;
-    
-    // Check if we've overstepped the speed limit
-    if (overrun > nextstep)
-    {
-      // We've exceeded the next timepoint, going way too fast (sprite drawing) so reschedule.
-      return 0;
-    }
-  }
-  
-  return 1;
-}
 
 void win_redraw(int16_t rx, int16_t ry, int16_t rw, int16_t rh)
 {
-  int16_t redraw_pxy[4], window_pxy[4], todo_pxy[4];
-
   wind_update(BEG_UPDATE);
   v_hide_c(vdi_handle);
   
@@ -214,10 +128,39 @@ void win_redraw(int16_t rx, int16_t ry, int16_t rw, int16_t rh)
 }
 
 //
+// handy callback display
+//
+
+uint8_t* displaycallback(void) // TODO: audio
+{
+  /*if (use_audio)
+   {
+   while (p != gAudioBufferPointer)
+   {
+   if (curpos >= AUDIO_BUFFER)
+   {
+   ahi_play_samples(audiobuf, SAMPLES, NOTIME, DOWAIT);
+   curpos = 0;
+   }
+   
+   audiobuf[curpos] = gAudioBuffer[p]-128;
+   curpos++;
+   p++;
+   
+   if (p >= HANDY_AUDIO_BUFFER_SIZE) { p = 0; }
+   }
+   }*/
+    
+  win_redraw(0, 0, 0, 0);
+  
+  return viewport_buffer;
+}
+
+//
 // main
 //
 
-int main(int argc, char *argv[])
+int32_t main(int32_t argc, char *argv[])
 {
   int16_t ap_id;
   
@@ -225,10 +168,9 @@ int main(int argc, char *argv[])
   int16_t wx, wy, ww, wh;
   int16_t ox, oy, ow, oh;
    
+  int16_t msg[8];
  	int16_t prevkc, prevks;
-	
-  static int16_t maskmouseb = 0;
-  
+	  
   int16_t dummy;
   int16_t vdi_bpp;
   int16_t work_in[12], work_out[272];
@@ -345,6 +287,8 @@ int main(int argc, char *argv[])
   // instanciate handy
   
   try { Lynx = new CSystem(cart_pathname, bios_pathname); } catch (...) { goto exit_prg; }
+  
+  nextstop = gSystemCycleCount;
 
   switch (Lynx->mCart->CartGetRotate())
   {
@@ -432,29 +376,24 @@ int main(int argc, char *argv[])
   
   if (win_handle < 0) { appl_exit(); return -1; }
   
-  wind_set(win_handle, WF_NAME, (int16_t)(((unsigned long)APPL_NAME)>>16), (int16_t)(((unsigned long)APPL_NAME) & 0xffff), 0, 0);
+  wind_set(win_handle, WF_NAME, (int16_t)(((uint32_t)APPL_NAME)>>16), (int16_t)(((uint32_t)APPL_NAME) & 0xffff), 0, 0);
   
   wind_open(win_handle, ox, oy, ow, oh);
-  
+
   // main loop
   
   while (1)
   {
-    int16_t ev_which;
-    int16_t msg[8];
-    int16_t mouse_event;
-    int16_t mousex, mousey, mouseb;
-    int16_t kstate, kc;
+    int16_t ev_which, kstate, kc;
 
     ev_which = evnt_multi(
-                          MU_MESAG | MU_TIMER | MU_KEYBD | MU_BUTTON,
-                          0x101, 7, maskmouseb,
-                          mouse_event,
-                          0, 0, 0, 0,
-                          0, 0, 0, 0, 0,
+                          MU_MESAG | MU_TIMER | MU_KEYBD,
+                          0,0,0,
+                          0,0,0,0,0,
+                          0,0,0,0,0,
                           msg,
                           10,
-                          &mousex, &mousey, &mouseb, &kstate, &kc, &dummy
+                          &dummy, &dummy, &dummy, &kstate, &kc, &dummy
                           );
     
     if (ev_which & MU_MESAG)
@@ -481,12 +420,7 @@ int main(int argc, char *argv[])
           break;
       }
     }
-    if (ev_which & MU_BUTTON)
-    {
-      // TODO: mouse events
-      maskmouseb = mouseb & 7;
-    }
-    if (ev_which & MU_BUTTON)
+    if (ev_which & MU_KEYBD)
     {
 			if ((prevkc != kc) || (prevks != kstate))
       {
@@ -498,35 +432,12 @@ int main(int argc, char *argv[])
     }
     if (ev_which & MU_TIMER)
     {
-      // TODO: fix timers managment (currently too slow)
+      nextstop += HANDY_SYSTEM_FREQ / HANDY_TIMER_FREQ; // ie. 800,000 cycles (50ms)
+      nextstop -= 10;                                   // minus 10ms of MU_TIMER
+
+      do { for (loop = 1024; loop; loop--) { Lynx->Update(); } } while (gSystemCycleCount < nextstop);
       
-      // Update TimerCount
-      gTimerCount++;
-
-      while (handy_core_update())
-      {
-        if (!gSystemHalt)
-        {
-          //extern SDL_mutex *sound_mutex;
-          //extern SDL_cond *sound_cv;
-          
-          // synchronize by sound samples
-          //SDL_LockMutex(sound_mutex);
-          for (loop = 256; loop; loop--)
-          {
-            //if (Throttle) { while (gAudioBufferPointer >= HANDY_AUDIO_BUFFER_SIZE/2) { SDL_CondWait(sound_cv, sound_mutex); } }
-            Lynx->Update();
-          }
-          //SDL_CondSignal(sound_cv);
-          //++SDL_UnlockMutex(sound_mutex);
-        }
-        else
-        {
-          gTimerCount++;
-        }
-      }
-
-      win_redraw(0, 0, 0, 0);
+      // TODO: fix timers managment (currently too slow)
     }
   }
   
