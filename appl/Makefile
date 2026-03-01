@@ -1,7 +1,7 @@
 #
 # Makefile
 #
-CFLAGS = -MMD -Wall
+CFLAGS = -O3 -MMD -Wall
 
 # list header files here
 HEADER = utils.h main.h

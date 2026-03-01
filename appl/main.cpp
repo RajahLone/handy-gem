@@ -49,25 +49,31 @@ static char cart_filename[MAXNAMELEN];
 #define VDI_BIT_ORDER_INTEL   2
 
 static CSystem   *Lynx;
-static int16_t   viewport_rotate;
-static int16_t   viewport_width;
-static int16_t   viewport_height;
-static int16_t   viewport_pixel_format;
-//static int16_t   viewport_scale;
-static uint32_t  viewport_size;
-static uintptr_t viewport_temp;
+static uint16_t  viewport_rotate = 0;
+static uint16_t  viewport_scale  = 1;
+static uint16_t  viewport_width  = HANDY_SCREEN_WIDTH;
+static uint16_t  viewport_height = HANDY_SCREEN_HEIGHT;
+static uint16_t  viewport_pixel_format;
+static uint16_t  viewport_pitch = 1;
 static uint8_t   *viewport_buffer;
 
+static uint16_t  scaling_available = 0;
+static uint16_t  scaled_width  = HANDY_SCREEN_WIDTH;
+static uint16_t  scaled_height = HANDY_SCREEN_HEIGHT;
+static uint8_t   *scaled_buffer;
+
+static int16_t vdi_bpp;
 static int16_t vdi_handle;
 static uint16_t screen_width;
 static uint16_t screen_height;
 
-#define WIN_COMPONENTS NAME | CLOSER | MOVER /*| FULLER*/
+static int16_t dx, dy, dw, dh;
+static int16_t win_components;
 static int16_t win_handle;
 static int16_t redraw_pxy[4], window_pxy[4], todo_pxy[4];
 static MFDB viewport_mfdb;
+static MFDB scaled_mfdb;
 static MFDB screen_mfdb;
-static int16_t viewport_pxy[8];
 
 //
 // contents redraw
@@ -75,6 +81,8 @@ static int16_t viewport_pxy[8];
 
 void win_redraw(int16_t rx, int16_t ry, int16_t rw, int16_t rh)
 {
+  int16_t viewport_pxy[8];
+
   wind_update(BEG_UPDATE);
   v_hide_c(vdi_handle);
   
@@ -104,17 +112,34 @@ void win_redraw(int16_t rx, int16_t ry, int16_t rw, int16_t rh)
   {
     if (rc_intersect((GRECT *)redraw_pxy, (GRECT *)todo_pxy))
     {
-      viewport_pxy[0] = (todo_pxy[0] - window_pxy[0]);
-      viewport_pxy[1] = (todo_pxy[1] - window_pxy[1]);
-      viewport_pxy[2] = MIN(todo_pxy[2], viewport_width) + viewport_pxy[0] - 1;
-      viewport_pxy[3] = MIN(todo_pxy[3], viewport_height) + viewport_pxy[1] - 1;
-      
-      viewport_pxy[4] = todo_pxy[0];
-      viewport_pxy[5] = todo_pxy[1];
-      viewport_pxy[6] = MIN(todo_pxy[2], viewport_width) + viewport_pxy[4] - 1;
-      viewport_pxy[7] = MIN(todo_pxy[3], viewport_height) + viewport_pxy[5] - 1;
-      
-      vro_cpyfm(vdi_handle, S_ONLY, viewport_pxy, &viewport_mfdb, &screen_mfdb);
+      if (viewport_scale > 1)
+      {
+        viewport_pxy[0] = (todo_pxy[0] - window_pxy[0]);
+        viewport_pxy[1] = (todo_pxy[1] - window_pxy[1]);
+        viewport_pxy[2] = MIN(todo_pxy[2], scaled_width) + viewport_pxy[0] - 1;
+        viewport_pxy[3] = MIN(todo_pxy[3], scaled_height) + viewport_pxy[1] - 1;
+        
+        viewport_pxy[4] = todo_pxy[0];
+        viewport_pxy[5] = todo_pxy[1];
+        viewport_pxy[6] = MIN(todo_pxy[2], scaled_width) + viewport_pxy[4] - 1;
+        viewport_pxy[7] = MIN(todo_pxy[3], scaled_height) + viewport_pxy[5] - 1;
+        
+        vro_cpyfm(vdi_handle, S_ONLY, viewport_pxy, &scaled_mfdb, &screen_mfdb);
+      }
+      else
+      {
+        viewport_pxy[0] = (todo_pxy[0] - window_pxy[0]);
+        viewport_pxy[1] = (todo_pxy[1] - window_pxy[1]);
+        viewport_pxy[2] = MIN(todo_pxy[2], viewport_width) + viewport_pxy[0] - 1;
+        viewport_pxy[3] = MIN(todo_pxy[3], viewport_height) + viewport_pxy[1] - 1;
+        
+        viewport_pxy[4] = todo_pxy[0];
+        viewport_pxy[5] = todo_pxy[1];
+        viewport_pxy[6] = MIN(todo_pxy[2], viewport_width) + viewport_pxy[4] - 1;
+        viewport_pxy[7] = MIN(todo_pxy[3], viewport_height) + viewport_pxy[5] - 1;
+        
+        vro_cpyfm(vdi_handle, S_ONLY, viewport_pxy, &viewport_mfdb, &screen_mfdb);
+      }
     }
     
     wind_get(win_handle, WF_NEXTXYWH, &todo_pxy[0], &todo_pxy[1], &todo_pxy[2], &todo_pxy[3]);
@@ -124,33 +149,124 @@ void win_redraw(int16_t rx, int16_t ry, int16_t rw, int16_t rh)
   }
   
   wind_update(END_UPDATE);
-  v_show_c(vdi_handle,1);
+  v_show_c(vdi_handle, 1);
+}
+
+//
+// contents resize
+//
+
+int16_t win_resize(uint16_t new_rotation, uint16_t new_scale)
+{
+  uint32_t  viewport_size;
+  uint32_t  scaled_size;
+  uintptr_t viewport_temp;
+  uintptr_t scaled_temp;
+
+  viewport_rotate = new_rotation;
+  if ((viewport_rotate < MIKIE_NO_ROTATE) || (viewport_rotate > MIKIE_ROTATE_R)) { viewport_rotate = MIKIE_NO_ROTATE; }
+
+  viewport_scale = new_scale;
+  if (!scaling_available) { viewport_scale = 1; } else if ((viewport_scale < 1) || (viewport_scale > 3)) { viewport_scale = 1; }
+
+  switch (viewport_rotate)
+  {
+    case MIKIE_NO_ROTATE:
+      viewport_width  = (uint16_t)HANDY_SCREEN_WIDTH;
+      viewport_height = (uint16_t)HANDY_SCREEN_HEIGHT;
+      break;
+    case MIKIE_ROTATE_L:
+    case MIKIE_ROTATE_R:
+      viewport_width  = (uint16_t)HANDY_SCREEN_HEIGHT;
+      viewport_height = (uint16_t)HANDY_SCREEN_WIDTH;
+      break;
+  }
+
+  Lynx->DisplaySetAttributes(viewport_rotate, viewport_pixel_format, ROUNDTOLONG(viewport_width) * viewport_pitch);
+
+  // allocate memory for viewport
+
+  if (viewport_buffer) { Mfree(viewport_buffer); viewport_buffer = NULL; }
+  if (scaled_buffer) { Mfree(scaled_buffer); scaled_buffer = NULL; }
+
+
+  viewport_size = (uint32_t)((ROUNDTOLONG(viewport_width) >> 3) * viewport_height * vdi_bpp);
+  viewport_temp = (uintptr_t)(mxMask ? Mxalloc(viewport_size, 0x43 & mxMask) : Malloc(viewport_size));
+
+  if (viewport_temp < 1) { form_alert(1, ALERT_NOT_ENOUGH_RAM); return 1; }
+  
+  viewport_buffer = (uint8_t *)viewport_temp;
+  
+  memset(viewport_buffer, 0, viewport_size);
+  
+  viewport_mfdb.fd_addr		  =	viewport_buffer;
+  viewport_mfdb.fd_w			  =	viewport_width;
+  viewport_mfdb.fd_h			  =	viewport_height;
+  viewport_mfdb.fd_wdwidth	=	(ROUNDTOLONG(viewport_width) >> 4);
+  viewport_mfdb.fd_stand	  =	0;
+  viewport_mfdb.fd_nplanes	=	vdi_bpp;
+  
+  scaled_width = (uint16_t)(viewport_width * viewport_scale);
+  scaled_height = (uint16_t)(viewport_height * viewport_scale);
+
+  if (viewport_scale > 1)
+  {
+    scaled_size = (uint32_t)((ROUNDTOLONG(scaled_width) >> 3) * scaled_height * vdi_bpp);
+    scaled_temp = (uintptr_t)(mxMask ? Mxalloc(scaled_size, 0x43 & mxMask) : Malloc(scaled_size));
+    
+    if (scaled_temp < 1) { form_alert(1, ALERT_NOT_ENOUGH_RAM); return 1; }
+    
+    scaled_buffer = (uint8_t *)scaled_temp;
+    
+    memset(scaled_buffer, 0, viewport_size);
+    
+    scaled_mfdb.fd_addr		  =	scaled_buffer;
+    scaled_mfdb.fd_w			  =	scaled_width;
+    scaled_mfdb.fd_h			  =	scaled_height;
+    scaled_mfdb.fd_wdwidth	=	(ROUNDTOLONG(scaled_width) >> 4);
+    scaled_mfdb.fd_stand	  =	0;
+    scaled_mfdb.fd_nplanes	=	vdi_bpp;
+  }
+  
+  if (win_handle)
+  {
+    int16_t ox, oy, ow, oh;
+
+    wind_get(win_handle, WF_WORKXYWH, &window_pxy[0], &window_pxy[1], &window_pxy[2], &window_pxy[3]);
+  
+    wind_calc(0, win_components, window_pxy[0], window_pxy[1], (int16_t)scaled_width, (int16_t)scaled_height, &ox, &oy, &ow, &oh);
+
+    wind_set(win_handle, WF_CURRXYWH, MAX(ox, dx + 1), MAX(oy, dy + 1), ow, oh);
+    
+    win_redraw(0, 0, 0, 0);
+  }
+  
+  return 0;
 }
 
 //
 // handy callback display
 //
 
-uint8_t* displaycallback(void) // TODO: audio
+uint8_t* displaycallback(void)
 {
-  /*if (use_audio)
-   {
-   while (p != gAudioBufferPointer)
-   {
-   if (curpos >= AUDIO_BUFFER)
-   {
-   ahi_play_samples(audiobuf, SAMPLES, NOTIME, DOWAIT);
-   curpos = 0;
-   }
-   
-   audiobuf[curpos] = gAudioBuffer[p]-128;
-   curpos++;
-   p++;
-   
-   if (p >= HANDY_AUDIO_BUFFER_SIZE) { p = 0; }
-   }
-   }*/
+  int16_t zoom_pxy[8];
+  
+  if (viewport_scale > 1)
+  {
+    zoom_pxy[0] = 0;
+    zoom_pxy[1] = 0;
+    zoom_pxy[2] = viewport_width - 1;
+    zoom_pxy[3] = viewport_height - 1;
     
+    zoom_pxy[4] = 0;
+    zoom_pxy[5] = 0;
+    zoom_pxy[6] = scaled_width - 1;
+    zoom_pxy[7] = scaled_height - 1;
+    
+    vro_cpyfm(vdi_handle, S_ONLY | 0x8000, zoom_pxy, &viewport_mfdb, &scaled_mfdb);
+  }
+  
   win_redraw(0, 0, 0, 0);
   
   return viewport_buffer;
@@ -164,15 +280,12 @@ int32_t main(int32_t argc, char *argv[])
 {
   int16_t ap_id;
   
-  int16_t dx, dy, dw, dh;
   int16_t wx, wy, ww, wh;
   int16_t ox, oy, ow, oh;
    
   int16_t msg[8];
- 	int16_t prevkc, prevks;
 	  
   int16_t dummy;
-  int16_t vdi_bpp;
   int16_t work_in[12], work_out[272];
   uint16_t vdi_pixel_format;
 
@@ -182,7 +295,6 @@ int32_t main(int32_t argc, char *argv[])
   int16_t fsel_button;
   
   uint16_t loop;
-  uint16_t viewport_pitch;
   
   // app init
 
@@ -204,6 +316,16 @@ int32_t main(int32_t argc, char *argv[])
     shel_write(9, 1, 1, "", "");
     Pdomain(1);
   }
+ 
+  wind_get(0, WF_WORKXYWH, &dx, &dy, &dw, &dh);
+  
+  wx = dx + ((dw - viewport_width) / 2);
+  wy = dy + ((dh - viewport_height) / 2);
+  ww = viewport_width;
+  wh = viewport_height;
+  
+  screen_width = dx + dw;
+  screen_height = dy + dh;
 
   // vdi init
 
@@ -218,6 +340,7 @@ int32_t main(int32_t argc, char *argv[])
 	vq_extnd(vdi_handle, 1, work_out);
 	vdi_bpp = work_out[4];
   vdi_pixel_format = VDI_BIT_ORDER_CLASSIC;
+  if (work_out[30] & 0x1) { scaling_available = 1; } else { scaling_available = 0; }
 
  	vsf_color(vdi_handle, 0);
 	vsf_interior(vdi_handle, 1);
@@ -285,29 +408,15 @@ int32_t main(int32_t argc, char *argv[])
   }
   
   // instanciate handy
+
+  gAudioEnabled = FALSE; // audio is disabled
   
   try { Lynx = new CSystem(cart_pathname, bios_pathname); } catch (...) { goto exit_prg; }
   
   nextstop = gSystemCycleCount;
 
-  switch (Lynx->mCart->CartGetRotate())
-  {
-    case 0: viewport_rotate = MIKIE_NO_ROTATE; break; // 1
-    case 1: viewport_rotate = MIKIE_ROTATE_L; break;  // 2
-    case 2: viewport_rotate = MIKIE_ROTATE_R; break;  // 3
-  }
-  switch (viewport_rotate)
-  {
-    case MIKIE_NO_ROTATE:
-      viewport_width  = 160;
-      viewport_height = 102;
-      break;
-    case MIKIE_ROTATE_L:
-    case MIKIE_ROTATE_R:
-      viewport_width  = 102;
-      viewport_height = 160;
-      break;
-  }
+  if (win_resize(Lynx->mCart->CartGetRotate(), viewport_scale)) { goto exit_prg; }
+  
   // TODO: vdi_pixel_format <- VDI_BIT_ORDER_INTEL, VDI_BIT_ORDER_FALCON;
   switch(vdi_bpp)
   {
@@ -332,49 +441,26 @@ int32_t main(int32_t argc, char *argv[])
       else { viewport_pixel_format = MIKIE_PIXEL_FORMAT_32BPP; }
       viewport_pitch = 4;
       break;
+    default:
+      viewport_pixel_format = MIKIE_PIXEL_FORMAT_8BPP;
+      viewport_pitch = 1;
+      break;
   }
 
   Lynx->DisplaySetAttributes(viewport_rotate, viewport_pixel_format, ROUNDTOLONG(viewport_width) * viewport_pitch);
 
-  // allocate memory for viewport
-
-  viewport_size = (ROUNDTOLONG(viewport_width) >> 3) * viewport_height * vdi_bpp;
-
-  viewport_temp = (uintptr_t)(mxMask ? Mxalloc(viewport_size, 0x43 & mxMask) : Malloc(viewport_size));
-
-  if (viewport_temp < 1) { form_alert(1, ALERT_NOT_ENOUGH_RAM); goto exit_prg; }
-  
-  viewport_buffer = (uint8_t *)viewport_temp;
-  
-  memset(viewport_buffer, 0, viewport_size);
-  
-  viewport_mfdb.fd_addr		  =	viewport_buffer;
-  viewport_mfdb.fd_w			  =	viewport_width;
-  viewport_mfdb.fd_h			  =	viewport_height;
-  viewport_mfdb.fd_wdwidth	=	(ROUNDTOLONG(viewport_width) >> 4);
-  viewport_mfdb.fd_stand	  =	0;
-  viewport_mfdb.fd_nplanes	=	vdi_bpp;
-
   // win init
- 
-  wind_get(0, WF_WORKXYWH, &dx, &dy, &dw, &dh);
-  
-  wx = dx + ((dw - viewport_width) / 2);
-  wy = dy + ((dh - viewport_height) / 2);
-  ww = viewport_width;
-  wh = viewport_height;
-  
-  screen_width = dx + dw;
-  screen_height = dy + dh;
-  
-  wind_calc(0, WIN_COMPONENTS, wx, wy, ww, wh, &ox, &oy, &ow, &oh);
+
+  win_components = NAME | CLOSER | MOVER; if (scaling_available) { win_components |= FULLER; }
+
+  wind_calc(0, win_components, wx, wy, ww, wh, &ox, &oy, &ow, &oh);
   
   ox = MAX(ox, dx + 1);
   oy = MAX(oy, dy + 1);
 
-  win_handle = wind_create(WIN_COMPONENTS, ox, oy, ow, oh);
+  win_handle = wind_create(win_components, ox, oy, ow, oh);
   
-  if (win_handle < 0) { appl_exit(); return -1; }
+  if (win_handle < 1) { appl_exit(); return -1; }
   
   wind_set(win_handle, WF_NAME, (int16_t)(((uint32_t)APPL_NAME)>>16), (int16_t)(((uint32_t)APPL_NAME) & 0xffff), 0, 0);
   
@@ -415,6 +501,10 @@ int32_t main(int32_t argc, char *argv[])
           if (msg[3] == win_handle) { wind_set(win_handle, WF_TOP, msg[4], 0, 0, 0); }
           break;
 
+        case WM_FULLED:
+          if (msg[3] == win_handle) { if (scaling_available) { if (win_resize(viewport_rotate, ++viewport_scale)) { goto exit_prg; } } }
+          break;
+
         case WM_REDRAW:
           if (msg[3] == win_handle) { win_redraw(msg[4], msg[5], msg[6], msg[7]); }
           break;
@@ -422,12 +512,68 @@ int32_t main(int32_t argc, char *argv[])
     }
     if (ev_which & MU_KEYBD)
     {
-			if ((prevkc != kc) || (prevks != kstate))
-      {
-        prevkc = kc;
-        prevks = kstate;
+      uint32_t OldKeyMask, KeyMask = Lynx->GetButtonData();
+      OldKeyMask = KeyMask;
 
-        // TODO: keyboard events
+      if (kstate == K_CTRL)
+      {
+        switch (kc & 0xff)
+        {
+          case 17: // Ctrl+Q
+          case 21: // Ctrl+U
+            goto exit_app;
+            break;
+          case 18: // Ctrl+R
+            if (win_resize(++viewport_rotate, viewport_scale)) { goto exit_prg; }
+            break;
+          case 6:  // Ctrl+F
+            if (scaling_available) { if (win_resize(viewport_rotate, ++viewport_scale)) { goto exit_prg; } }
+            break;
+        }
+      }
+      else if (kstate == 0)
+      {
+        switch ((kc >> 8) & 0xff)
+        {
+          case 0x48: // up arrow
+            KeyMask |= BUTTON_UP;
+            break;
+          case 0x4b: // left arrow
+            KeyMask |= BUTTON_LEFT;
+            break;
+          case 0x4d: // right arrow
+            KeyMask |= BUTTON_RIGHT;
+            break;
+          case 0x50: // down arrow
+            KeyMask |= BUTTON_DOWN;
+            break;
+          case 0x3b: // F1
+          case 0x54: // Shift+F1
+            KeyMask |= BUTTON_OPT1;
+            break;
+          case 0x3c: // F2
+          case 0x55: // Shift+F2
+            KeyMask |= BUTTON_OPT2;
+            break;
+          default:
+            switch (kc & 0xff)
+            {
+              case 0x41: // A
+              case 0x61: // a
+                KeyMask |= BUTTON_A;
+                break;
+              case 0x42: // B
+              case 0x62: // b
+                KeyMask |= BUTTON_B;
+                break;
+              case 0x50: // P
+              case 0x70: // p
+                KeyMask |= BUTTON_PAUSE;
+                break;
+            }
+        }
+
+        if (OldKeyMask != KeyMask) { Lynx->SetButtonData(KeyMask); }
 			}
     }
     if (ev_which & MU_TIMER)
@@ -446,6 +592,7 @@ exit_app:
   wind_delete(win_handle);
   
   if (viewport_buffer) { Mfree(viewport_buffer); }
+  if (scaled_buffer) { Mfree(scaled_buffer); }
   
 exit_prg:
   v_clsvwk(vdi_handle);

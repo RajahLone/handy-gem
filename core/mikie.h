@@ -16,21 +16,21 @@ class CSystem;
 //
 
 #define CTRL_A_IRQEN    0x80
-#define CTRL_A_RTD              0x40
+#define CTRL_A_RTD      0x40
 #define CTRL_A_RELOAD   0x10
 #define CTRL_A_COUNT    0x08
 #define CTRL_A_DIVIDE   0x07
 
 #define CTRL_B_TDONE    0x08
 #define CTRL_B_LASTCK   0x04
-#define CTRL_B_CIN              0x02
-#define CTRL_B_COUT             0x01
+#define CTRL_B_CIN      0x02
+#define CTRL_B_COUT     0x01
 
-#define LINE_TIMER              0x00
+#define LINE_TIMER      0x00
 #define SCREEN_TIMER    0x02
 
-#define LINE_WIDTH              160
-#define LINE_SIZE               80
+#define LINE_WIDTH      160
+#define LINE_SIZE       80
 
 #define UART_TX_INACTIVE        0x80000000
 #define UART_RX_INACTIVE        0x80000000
@@ -60,10 +60,10 @@ typedef struct
       UBYTE FourColour:1;
       UBYTE Flip:1;
       UBYTE DMAEnable:1;
-    }Bits;
+    } Bits;
     UBYTE Byte;
   };
-}TDISPCTL;
+} TDISPCTL;
 
 typedef struct
 {
@@ -77,17 +77,17 @@ typedef struct
       UBYTE Blue:4;
       UBYTE Red:4;
       UBYTE Green:4;
-    }Colours;
+    } Colours;
     ULONG     Index;
   };
-}TPALETTE;
+} TPALETTE;
 
 //
 // Emumerated types for possible mikie windows independant modes
 //
 enum
 {
-  MIKIE_BAD_MODE=0,
+  MIKIE_BAD_MODE = 0,
   MIKIE_NO_ROTATE,
   MIKIE_ROTATE_L,
   MIKIE_ROTATE_R
@@ -95,7 +95,7 @@ enum
 
 enum
 {
-  MIKIE_PIXEL_FORMAT_8BPP=0,
+  MIKIE_PIXEL_FORMAT_8BPP = 0,
   MIKIE_PIXEL_FORMAT_16BPP_555,
   MIKIE_PIXEL_FORMAT_16BPP_565,
   MIKIE_PIXEL_FORMAT_24BPP,

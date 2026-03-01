@@ -36,10 +36,10 @@ class CSystem;
 #define BUTTON_OPT2             0x0004
 #define BUTTON_OPT1             0x0008
 #define BUTTON_LEFT             0x0010
-#define BUTTON_RIGHT    0x0020
+#define BUTTON_RIGHT            0x0020
 #define BUTTON_UP               0x0040
 #define BUTTON_DOWN             0x0080
-#define BUTTON_PAUSE    0x0100
+#define BUTTON_PAUSE            0x0100
 
 enum {line_error=0,line_abs_literal,line_literal,line_packed};
 enum {math_finished=0,math_divide,math_multiply,math_init_divide,math_init_multiply};
