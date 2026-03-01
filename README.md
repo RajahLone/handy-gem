@@ -12,6 +12,7 @@ work-in-progress, TODOs are:
 
 usage:
 - lynxboot.img must be placed besides the program, drag'n'drop a lnx file or select it with the fileselector.
+- only for high/true color video screenmodes.
 - keys A for button A, B for button B, P for 'Pause' button, F1 for 'Options 1', F2 for 'Options 2'
 - Ctrl+R to rotate screen.
 - Ctrl+F or window fuller for x2 then x3 window zoom (available only if the VDI support vro_cpyfm scaling, such as in some NVDI drivers).
