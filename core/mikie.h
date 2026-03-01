@@ -122,10 +122,10 @@ public:
   void    PresetForHomebrew(void);
   ULONG   GetLfsrNext(ULONG current);
   
-  void    ComLynxCable(int status);
-  void    ComLynxRxData(int data);
-  void    ComLynxTxLoopback(int data);
-  void    ComLynxTxCallback(void (*function)(int data,ULONG objref),ULONG objref);
+  void    ComLynxCable(SLONG status);
+  void    ComLynxRxData(SLONG data);
+  void    ComLynxTxLoopback(SLONG data);
+  void    ComLynxTxCallback(void (*function)(SLONG data,ULONG objref),ULONG objref);
   
   void    DisplaySetAttributes(ULONG Rotate, ULONG Format, ULONG Pitch);
   
@@ -1622,16 +1622,16 @@ private:
   ULONG           mUART_PARITY_ENABLE;
   ULONG           mUART_PARITY_EVEN;
   
-  int                     mUART_CABLE_PRESENT;
-  void            (*mpUART_TX_CALLBACK)(int data,ULONG objref);
+  SLONG           mUART_CABLE_PRESENT;
+  void            (*mpUART_TX_CALLBACK)(SLONG data,ULONG objref);
   ULONG           mUART_TX_CALLBACK_OBJECT;
   
-  int                     mUART_Rx_input_queue[UART_MAX_RX_QUEUE];
-  unsigned int mUART_Rx_input_ptr;
-  unsigned int mUART_Rx_output_ptr;
-  int                     mUART_Rx_waiting;
-  int                     mUART_Rx_framing_error;
-  int                     mUART_Rx_overun_error;
+  SLONG           mUART_Rx_input_queue[UART_MAX_RX_QUEUE];
+  ULONG           mUART_Rx_input_ptr;
+  ULONG           mUART_Rx_output_ptr;
+  SLONG           mUART_Rx_waiting;
+  SLONG           mUART_Rx_framing_error;
+  SLONG           mUART_Rx_overun_error;
   
   //
   // Screen related

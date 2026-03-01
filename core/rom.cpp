@@ -79,7 +79,7 @@ CRom::CRom(char* romfile)
   strncpy(mFileName, romfile, MAX_PATH);
   Reset();
   
-  for (int loop = 0; loop < ROM_SIZE; loop++)
+  for (ULONG loop = 0; loop < ROM_SIZE; loop++)
   {   mRomData[loop] = bios[loop];
   }   }
 

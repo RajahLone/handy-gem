@@ -16,7 +16,7 @@ EXPORT void say(STRPTR text) // TODO: outputs to logfile u:\ram\handy.log if MiN
   printf("\n");
 }
 
-EXPORT void flipulong(ULONG* theaddress)
+EXPORT void flipuint(ULONG* theaddress)
 {
   ULONG oldvalue, newvalue;
   
@@ -42,11 +42,10 @@ EXPORT void flipuword(UWORD* theaddress)
   *(theaddress) = newvalue;
 }
 
-EXPORT unsigned int afwrite(const void* ptr, unsigned int size, unsigned int n, FILE* f, UBYTE flip)
+EXPORT ULONG afwrite(const void* ptr, SLONG size, SLONG n, FILE* f, UBYTE flip)
 {
-  int          i, j;
-  ULONG        dest2;
-  unsigned int retval;
+  SLONG i, j;
+  ULONG dest2, retval;
   
   /* We must take care not to alter the passed argument! */
   
@@ -56,7 +55,7 @@ EXPORT unsigned int afwrite(const void* ptr, unsigned int size, unsigned int n, 
   if (flip == 2)
   {
     j = 0;
-    for (i = 0; i < (int) n; i++)
+    for (i = 0; i < n; i++)
     {
       flipuword((UWORD*) (dest2 + j));
       j += 2;
@@ -65,9 +64,9 @@ EXPORT unsigned int afwrite(const void* ptr, unsigned int size, unsigned int n, 
   else if (flip == 4)
   {
     j = 0;
-    for (i = 0; i < (int) n; i++)
+    for (i = 0; i < n; i++)
     {
-      flipulong((ULONG*) (dest2 + j));
+      flipuint((ULONG*) (dest2 + j));
       j += 4;
     }
   }
@@ -77,11 +76,10 @@ EXPORT unsigned int afwrite(const void* ptr, unsigned int size, unsigned int n, 
   return retval;
 }
 
-EXPORT int lss_read(void* dest, int varsize, int varcount, LSS_FILE* fp, UBYTE flip)
+EXPORT ULONG lss_read(void* dest, SLONG varsize, SLONG varcount, LSS_FILE* fp, UBYTE flip)
 {
-  int   i, j;
-  ULONG copysize,
-  dest2;
+  SLONG i, j;
+  ULONG copysize, dest2;
   
   copysize=varsize*varcount;
   if((fp->index + copysize) > fp->index_limit) copysize=fp->index_limit - fp->index;
@@ -104,7 +102,7 @@ EXPORT int lss_read(void* dest, int varsize, int varcount, LSS_FILE* fp, UBYTE f
     j = 0;
     for (i = 0; i < varcount; i++)
     {
-      flipulong((ULONG*) (dest2 + j));
+      flipuint((ULONG*) (dest2 + j));
       j += 4;
     }
   }

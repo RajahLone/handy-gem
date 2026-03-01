@@ -75,5 +75,5 @@ uint16_t Mxmask(void)
 }
 
 // from Daroou's sources
-uint32_t get_long_0x4ba(void) {	return (*((uint32_t *)0x4BA)); }
-uint32_t get_timer(void) { return (Supexec(get_long_0x4ba)); }
+uint32_t get_int_0x4ba(void) {	return (*((uint32_t *)0x4BA)); }
+uint32_t get_timer(void) { return (Supexec(get_int_0x4ba)); }

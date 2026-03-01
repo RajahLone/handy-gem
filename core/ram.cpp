@@ -57,7 +57,7 @@ void CRam::Reset(void)
   {
     HOME_HEADER     header;
     UBYTE tmp;
-    int data_size;
+    SLONG data_size;
     
     // Reverse the bytes in the header words
     memcpy(&header,mFileData,sizeof(HOME_HEADER));
@@ -69,7 +69,7 @@ void CRam::Reset(void)
     // Now we can safely read/manipulate the data
     header.load_address-=10;
     
-    data_size = __min(int(header.size), (int)(mFileSize));
+    data_size = __min(SLONG(header.size), (SLONG)(mFileSize));
     memset(mRamData, 0x00, header.load_address);
     memcpy(mRamData+header.load_address, mFileData, data_size);
     memset(mRamData+header.load_address+data_size, 0x00, RAM_SIZE-header.load_address-data_size);

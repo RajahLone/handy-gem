@@ -118,7 +118,7 @@ void CSusie::Reset(void)
   mSPRGO=FALSE;
   mEVERON=FALSE;
   
-  for(int loop=0;loop<16;loop++) mPenIndex[loop]=loop;
+  for(UWORD loop=0;loop<16;loop++) mPenIndex[loop]=loop;
   
   mJOYSTICK.Byte=0;
   mSWITCHES.Byte=0;
@@ -417,8 +417,8 @@ void CSusie::DoMathDivide(void)
 
 ULONG CSusie::PaintSprites(void)
 {
-  int     sprcount=0;
-  int data=0;
+  SLONG     sprcount=0;
+  SLONG data=0;
   bool everonscreen=0;
   
   TRACE_SUSIE0("                                                              ");
@@ -603,7 +603,7 @@ ULONG CSusie::PaintSprites(void)
       if(!mSPRCTL1_ReloadPalette)
       {
         TRACE_SUSIE0("PaintSprites() Palette reloaded");
-        for(int loop=0;loop<8;loop++)
+        for(UWORD loop=0;loop<8;loop++)
         {
           UBYTE data=RAM_PEEK(mTMPADR.Word++);
           mPenIndex[loop*2]=(data>>4)&0x0f;
@@ -620,21 +620,21 @@ ULONG CSusie::PaintSprites(void)
       
       // Setup screen start end variables
       
-      int screen_h_start=(SWORD)mHOFF.Word;
-      int screen_h_end=(SWORD)mHOFF.Word+SCREEN_WIDTH;
-      int screen_v_start=(SWORD)mVOFF.Word;
-      int screen_v_end=(SWORD)mVOFF.Word+SCREEN_HEIGHT;
+      SLONG screen_h_start=(SWORD)mHOFF.Word;
+      SLONG screen_h_end=(SWORD)mHOFF.Word+SCREEN_WIDTH;
+      SLONG screen_v_start=(SWORD)mVOFF.Word;
+      SLONG screen_v_end=(SWORD)mVOFF.Word+SCREEN_HEIGHT;
       
-      int world_h_mid=screen_h_start+0x8000+(SCREEN_WIDTH/2);
-      int world_v_mid=screen_v_start+0x8000+(SCREEN_HEIGHT/2);
+      SLONG world_h_mid=screen_h_start+0x8000+(SCREEN_WIDTH/2);
+      SLONG world_v_mid=screen_v_start+0x8000+(SCREEN_HEIGHT/2);
       
       TRACE_SUSIE2("PaintSprites() screen_h_start $%04x screen_h_end $%04x",screen_h_start,screen_h_end);
       TRACE_SUSIE2("PaintSprites() screen_v_start $%04x screen_v_end $%04x",screen_v_start,screen_v_end);
       TRACE_SUSIE2("PaintSprites() world_h_mid    $%04x world_v_mid  $%04x",world_h_mid,world_v_mid);
       
       bool superclip=FALSE;
-      int quadrant=0;
-      int hsign,vsign;
+      SLONG quadrant=0;
+      SLONG hsign,vsign;
       
       if(mSPRCTL1_StartLeft)
       {
@@ -666,12 +666,12 @@ ULONG CSusie::PaintSprites(void)
       
       // Loop for 4 quadrants
       
-      for(int loop=0;loop<4;loop++)
+      for(UWORD loop=0;loop<4;loop++)
       {
         TRACE_SUSIE1("PaintSprites() -------- Rendering Quadrant %03d --------",quadrant);
         
-        int sprite_v=mVPOSSTRT.Word;
-        int sprite_h=mHPOSSTRT.Word;
+        SLONG sprite_v=mVPOSSTRT.Word;
+        SLONG sprite_h=mHPOSSTRT.Word;
         
         bool render=FALSE;
         
@@ -715,9 +715,9 @@ ULONG CSusie::PaintSprites(void)
           // Quadrant mapping for superclipping must also take into account
           // the hflip, vflip bits & negative tilt to be able to work correctly
           //
-          int     modquad=quadrant;
-          static int vquadflip[4]={1,0,3,2};
-          static int hquadflip[4]={3,2,1,0};
+          SLONG     modquad=quadrant;
+          static SLONG vquadflip[4]={1,0,3,2};
+          static SLONG hquadflip[4]={3,2,1,0};
           
           if(mSPRCTL0_Vflip) modquad=vquadflip[modquad];
           if(mSPRCTL0_Hflip) modquad=hquadflip[modquad];
@@ -750,14 +750,14 @@ ULONG CSusie::PaintSprites(void)
         
         TRACE_SUSIE1("PaintSprites() Render status %d",render);
         
-        static int pixel_height=0;
-        static int pixel_width=0;
-        static int pixel=0;
-        static int hoff=0,voff=0;
-        static int hloop=0,vloop=0;
+        static SLONG pixel_height=0;
+        static SLONG pixel_width=0;
+        static SLONG pixel=0;
+        static SLONG hoff=0,voff=0;
+        static SLONG hloop=0,vloop=0;
         static bool onscreen=0;
-        static int vquadoff=0;
-        static int hquadoff=0;
+        static SLONG vquadoff=0;
+        static SLONG hquadoff=0;
         
         if(render)
         {
@@ -1064,7 +1064,7 @@ inline void CSusie::ProcessPixel(ULONG hoff,ULONG pixel)
       {
         if(!mSPRCOLL_Collide && !mSPRSYS_NoCollide)
         {
-          int collision=ReadCollision(hoff);
+          SLONG collision=ReadCollision(hoff);
           if(collision>mCollision)
           {
             mCollision=collision;
@@ -1090,7 +1090,7 @@ inline void CSusie::ProcessPixel(ULONG hoff,ULONG pixel)
         ZWritePixel(hoff,pixel);
         if(!mSPRCOLL_Collide && !mSPRSYS_NoCollide)
         {
-          int collision=ReadCollision(hoff);
+          SLONG collision=ReadCollision(hoff);
           if(collision>mCollision)
           {
             mCollision=collision;
@@ -1119,7 +1119,7 @@ inline void CSusie::ProcessPixel(ULONG hoff,ULONG pixel)
       {
         if(!mSPRCOLL_Collide && !mSPRSYS_NoCollide)
         {
-          int collision=ReadCollision(hoff);
+          SLONG collision=ReadCollision(hoff);
           if(collision>mCollision)
           {
             mCollision=collision;
@@ -1148,7 +1148,7 @@ inline void CSusie::ProcessPixel(ULONG hoff,ULONG pixel)
       {
         if(!mSPRCOLL_Collide && !mSPRSYS_NoCollide)
         {
-          int collision=ReadCollision(hoff);
+          SLONG collision=ReadCollision(hoff);
           if(collision>mCollision)
           {
             mCollision=collision;
@@ -1177,7 +1177,7 @@ inline void CSusie::ProcessPixel(ULONG hoff,ULONG pixel)
       {
         if(!mSPRCOLL_Collide && !mSPRSYS_NoCollide && pixel!=0x0e)
         {
-          int collision=ReadCollision(hoff);
+          SLONG collision=ReadCollision(hoff);
           if(collision>mCollision)
           {
             mCollision=collision;

@@ -33,12 +33,12 @@
 
 #define xADC()\
 {\
-int value=CPU_PEEK(mOperand);\
+SLONG value=CPU_PEEK(mOperand);\
 if(mD)\
 {\
-int c = mC?1:0;\
-int lo = (mA & 0x0f) + (value & 0x0f) + c;\
-int hi = (mA & 0xf0) + (value & 0xf0);\
+SLONG c = mC?1:0;\
+SLONG lo = (mA & 0x0f) + (value & 0x0f) + c;\
+SLONG hi = (mA & 0xf0) + (value & 0xf0);\
 mV=0;\
 mC=0;\
 if (lo > 0x09)\
@@ -53,8 +53,8 @@ mA = (lo & 0x0f) + (hi & 0xf0);\
 }\
 else\
 {\
-int c = mC?1:0;\
-int sum = mA + value + c;\
+SLONG c = mC?1:0;\
+SLONG sum = mA + value + c;\
 mV=0;\
 mC=0;\
 if (~(mA^value) & (mA^sum) & 0x80) mV=1;\
@@ -72,7 +72,7 @@ SET_NZ(mA);\
 
 #define xASL()\
 {\
-int value=CPU_PEEK(mOperand);\
+SLONG value=CPU_PEEK(mOperand);\
 mC=value&0x80;\
 value<<=1;\
 value&=0xff;\
@@ -92,7 +92,7 @@ SET_NZ(mA);\
 {\
 if(!mC)\
 {\
-int offset=(signed char)CPU_PEEK(mPC);\
+SLONG offset=(signed char)CPU_PEEK(mPC);\
 mPC++;\
 mPC+=offset;\
 mPC&=0xffff;\
@@ -108,7 +108,7 @@ mPC&=0xffff;\
 {\
 if(mC)\
 {\
-int offset=(signed char)CPU_PEEK(mPC);\
+SLONG offset=(signed char)CPU_PEEK(mPC);\
 mPC++;\
 mPC+=offset;\
 mPC&=0xffff;\
@@ -124,7 +124,7 @@ mPC&=0xffff;\
 {\
 if(mZ)\
 {\
-int offset=(signed char)CPU_PEEK(mPC);\
+SLONG offset=(signed char)CPU_PEEK(mPC);\
 mPC++;\
 mPC+=offset;\
 mPC&=0xffff;\
@@ -138,7 +138,7 @@ mPC&=0xffff;\
 
 #define xBIT()\
 {\
-int value=CPU_PEEK(mOperand);\
+SLONG value=CPU_PEEK(mOperand);\
 SET_Z(mA&value);\
 \
 if(mOpcode!=0x89)\
@@ -152,7 +152,7 @@ mV=value&0x40;\
 {\
 if(mN)\
 {\
-int offset=(signed char)CPU_PEEK(mPC);\
+SLONG offset=(signed char)CPU_PEEK(mPC);\
 mPC++;\
 mPC+=offset;\
 mPC&=0xffff;\
@@ -168,7 +168,7 @@ mPC&=0xffff;\
 {\
 if(!mZ)\
 {\
-int offset=(signed char)CPU_PEEK(mPC);\
+SLONG offset=(signed char)CPU_PEEK(mPC);\
 mPC++;\
 mPC+=offset;\
 mPC&=0xffff;\
@@ -184,7 +184,7 @@ mPC&=0xffff;\
 {\
 if(!mN)\
 {\
-int offset=(signed char)CPU_PEEK(mPC);\
+SLONG offset=(signed char)CPU_PEEK(mPC);\
 mPC++;\
 mPC+=offset;\
 mPC&=0xffff;\
@@ -198,7 +198,7 @@ mPC&=0xffff;\
 
 #define xBRA()\
 {\
-int offset=(signed char)CPU_PEEK(mPC);\
+SLONG offset=(signed char)CPU_PEEK(mPC);\
 mPC++;\
 mPC+=offset;\
 mPC&=0xffff;\
@@ -222,7 +222,7 @@ mPC=CPU_PEEKW(IRQ_VECTOR);\
 {\
 if(!mV)\
 {\
-int offset=(signed char)CPU_PEEK(mPC);\
+SLONG offset=(signed char)CPU_PEEK(mPC);\
 mPC++;\
 mPC+=offset;\
 mPC&=0xffff;\
@@ -238,7 +238,7 @@ mPC&=0xffff;\
 {\
 if(mV)\
 {\
-int offset=(signed char)CPU_PEEK(mPC);\
+SLONG offset=(signed char)CPU_PEEK(mPC);\
 mPC++;\
 mPC+=offset;\
 mPC&=0xffff;\
@@ -272,7 +272,7 @@ mV=FALSE;\
 
 #define xCMP()\
 {\
-int value=CPU_PEEK(mOperand);\
+SLONG value=CPU_PEEK(mOperand);\
 mC=0;\
 if (mA >= value) mC=1;\
 SET_NZ((UBYTE)(mA - value))\
@@ -280,7 +280,7 @@ SET_NZ((UBYTE)(mA - value))\
 
 #define xCPX()\
 {\
-int value=CPU_PEEK(mOperand);\
+SLONG value=CPU_PEEK(mOperand);\
 mC=0;\
 if (mX >= value) mC=1;\
 SET_NZ((UBYTE)(mX - value))\
@@ -288,7 +288,7 @@ SET_NZ((UBYTE)(mX - value))\
 
 #define xCPY()\
 {\
-int value=CPU_PEEK(mOperand);\
+SLONG value=CPU_PEEK(mOperand);\
 mC=0;\
 if (mY >= value) mC=1;\
 SET_NZ((UBYTE)(mY - value))\
@@ -296,7 +296,7 @@ SET_NZ((UBYTE)(mY - value))\
 
 #define xDEC()\
 {\
-int value=CPU_PEEK(mOperand)-1;\
+SLONG value=CPU_PEEK(mOperand)-1;\
 value&=0xff;\
 CPU_POKE(mOperand,value);\
 SET_NZ(value);\
@@ -331,7 +331,7 @@ SET_NZ(mA);\
 
 #define xINC()\
 {\
-int value=CPU_PEEK(mOperand)+1;\
+SLONG value=CPU_PEEK(mOperand)+1;\
 value&=0xff;\
 CPU_POKE(mOperand,value);\
 SET_NZ(value);\
@@ -390,7 +390,7 @@ SET_NZ(mY);\
 
 #define xLSR()\
 {\
-int value=CPU_PEEK(mOperand);\
+SLONG value=CPU_PEEK(mOperand);\
 mC=value&0x01;\
 value=(value>>1)&0x7f;\
 CPU_POKE(mOperand,value);\
@@ -442,7 +442,7 @@ SET_NZ(mA);\
 
 #define xPLP()\
 {\
-int P;\
+SLONG P;\
 PULL(P);\
 PS(P);\
 }
@@ -461,8 +461,8 @@ SET_NZ(mY);\
 
 #define xROL()\
 {\
-int value=CPU_PEEK(mOperand);\
-int oldC=mC;\
+SLONG value=CPU_PEEK(mOperand);\
+SLONG oldC=mC;\
 mC=value&0x80;\
 value=(value<<1)|(oldC?1:0);\
 value&=0xff;\
@@ -472,7 +472,7 @@ SET_NZ(value);\
 
 #define xROLA()\
 {\
-int oldC=mC;\
+SLONG oldC=mC;\
 mC=mA&0x80;\
 mA=(mA<<1)|(oldC?1:0);\
 mA&=0xff;\
@@ -481,8 +481,8 @@ SET_NZ(mA);\
 
 #define xROR()\
 {\
-int value=CPU_PEEK(mOperand);\
-int oldC=mC;\
+SLONG value=CPU_PEEK(mOperand);\
+SLONG oldC=mC;\
 mC=value&0x01;\
 value=((value>>1)&0x7f)|(oldC?0x80:0x00);\
 value&=0xff;\
@@ -492,7 +492,7 @@ SET_NZ(value);\
 
 #define xRORA()\
 {\
-int oldC=mC;\
+SLONG oldC=mC;\
 mC=mA&0x01;\
 mA=((mA>>1)&0x7f)|(oldC?0x80:0x00);\
 mA&=0xff;\
@@ -501,7 +501,7 @@ SET_NZ(mA);\
 
 #define xRTI()\
 {\
-int tmp;\
+SLONG tmp;\
 PULL(tmp);\
 PS(tmp);\
 PULL(mPC);\
@@ -511,7 +511,7 @@ mPC|=tmp<<8;\
 
 #define xRTS()\
 {\
-int tmp;\
+SLONG tmp;\
 PULL(mPC);\
 PULL(tmp);\
 mPC|=tmp<<8;\
@@ -520,13 +520,13 @@ mPC++;\
 
 #define xSBC()\
 {\
-int value=CPU_PEEK(mOperand);\
+SLONG value=CPU_PEEK(mOperand);\
 if (mD)\
 {\
-int c = mC?0:1;\
-int sum = mA - value - c;\
-int lo = (mA & 0x0f) - (value & 0x0f) - c;\
-int hi = (mA & 0xf0) - (value & 0xf0);\
+SLONG c = mC?0:1;\
+SLONG sum = mA - value - c;\
+SLONG lo = (mA & 0x0f) - (value & 0x0f) - c;\
+SLONG hi = (mA & 0xf0) - (value & 0xf0);\
 mV=0;\
 mC=0;\
 if ((mA^value) & (mA^sum) & 0x80) mV=1;\
@@ -538,8 +538,8 @@ mA = (lo & 0x0f) + (hi & 0xf0);\
 }\
 else\
 {\
-int c = mC?0:1;\
-int sum = mA - value - c;\
+SLONG c = mC?0:1;\
+SLONG sum = mA - value - c;\
 mV=0;\
 mC=0;\
 if ((mA^value) & (mA^sum) & 0x80) mV=1;\
@@ -603,7 +603,7 @@ SET_NZ(mY);\
 
 #define xTRB()\
 {\
-int value=CPU_PEEK(mOperand);\
+SLONG value=CPU_PEEK(mOperand);\
 SET_Z(mA&value);\
 value=value&(mA^0xff);\
 CPU_POKE(mOperand,value);\
@@ -611,7 +611,7 @@ CPU_POKE(mOperand,value);\
 
 #define xTSB()\
 {\
-int value=CPU_PEEK(mOperand);\
+SLONG value=CPU_PEEK(mOperand);\
 SET_Z(mA&value);\
 value=value|mA;\
 CPU_POKE(mOperand,value);\

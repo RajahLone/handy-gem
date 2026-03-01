@@ -13,7 +13,7 @@ CMemMap::CMemMap(CSystem& parent)
 
 void CMemMap::Reset(void)
 {   // Initialise ALL pointers to RAM then overload to correct
-  for(int loop=0;loop<SYSTEM_SIZE;loop++) mSystem.mMemoryHandlers[loop]=mSystem.mRam;
+  for(ULONG loop=0;loop<SYSTEM_SIZE;loop++) mSystem.mMemoryHandlers[loop]=mSystem.mRam;
   
   // Special case for ourselves.
   mSystem.mMemoryHandlers[0xFFF8]=mSystem.mRam;
@@ -69,7 +69,7 @@ bool CMemMap::ContextLoad(LSS_FILE *fp)
 inline void CMemMap::Poke(ULONG addr, UBYTE data)
 {   TRACE_MEMMAP1("Poke() - Data %02x",data);
   
-  int newstate,loop;
+  SLONG newstate,loop;
   
   // FC00-FCFF Susie area
   newstate=(data&0x01)?FALSE:TRUE;

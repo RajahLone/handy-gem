@@ -66,7 +66,7 @@ public:
   const char*     CartGetName(void) { return mName;};
   const char*     CartGetManufacturer(void) { return mManufacturer; };
   ULONG   CartGetRotate(void) { return mRotation;};
-  int             CartHeaderLess(void) { return mHeaderLess;};
+  SLONG   CartHeaderLess(void) { return mHeaderLess;};
   ULONG   CRC32(void) { return mCRC32; };
   
   // Access for the lynx itself, it has no idea of address etc as this is done by the

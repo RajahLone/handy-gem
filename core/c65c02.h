@@ -64,19 +64,19 @@ enum {  illegal=0,
 
 typedef struct
 {
-  int PS;         // Processor status register   8 bits
-  int A;          // Accumulator                 8 bits
-  int X;          // X index register            8 bits
-  int Y;          // Y index register            8 bits
-  int SP;         // Stack Pointer               8 bits
-  int Opcode;     // Instruction opcode          8 bits
-  int Operand;// Intructions operand                16 bits
-  int PC;         // Program Counter            16 bits
+  SLONG PS;         // Processor status register   8 bits
+  SLONG A;          // Accumulator                 8 bits
+  SLONG X;          // X index register            8 bits
+  SLONG Y;          // Y index register            8 bits
+  SLONG SP;         // Stack Pointer               8 bits
+  SLONG Opcode;     // Instruction opcode          8 bits
+  SLONG Operand;// Intructions operand                16 bits
+  SLONG PC;         // Program Counter            16 bits
   bool NMI;
   bool IRQ;
   bool WAIT;
 #ifdef _LYNXDBG
-  int     cpuBreakpoints[MAX_CPU_BREAKPOINTS];
+  SLONG     cpuBreakpoints[MAX_CPU_BREAKPOINTS];
 #endif
 }C6502_REGS;
 
@@ -102,7 +102,7 @@ public:
       mBCDTable[1][t]=(((t % 100) / 10) << 4) | (t % 10);
     }
 #ifdef _LYNXDBG
-    for(int loop=0;loop<MAX_CPU_BREAKPOINTS;loop++) mPcBreakpoints[loop]=0xfffffff;
+    for(ULONG loop=0;loop<MAX_CPU_BREAKPOINTS;loop++) mPcBreakpoints[loop]=0xfffffff;
     mDbgFlag=0;
 #endif
     Reset();
@@ -144,7 +144,7 @@ public:
   inline bool ContextSave(FILE *fp)
   {
     TRACE_CPU0("ContextSave()");
-    int mPS;
+    SLONG mPS;
     mPS=PS();
     if(!fprintf(fp,"C6502::ContextSave")) return 0;
     if(!afwrite(&mA,sizeof(ULONG),1,fp, 4)) return 0;
@@ -160,7 +160,7 @@ public:
   inline bool ContextLoad(LSS_FILE *fp)
   {
     TRACE_CPU0("ContextLoad()");
-    int mPS;
+    SLONG mPS;
     char teststr[100]="XXXXXXXXXXXXXXXXXX";
     if(!lss_read(teststr,sizeof(char),18,fp, 0)) return 0;
     if(strcmp(teststr,"C6502::ContextSave")!=0) return 0;
@@ -1622,7 +1622,7 @@ public:
     
     // Trigger breakpoint if required
     
-    for(int loop=0;loop<MAX_CPU_BREAKPOINTS;loop++)
+    for(ULONG loop=0;loop<MAX_CPU_BREAKPOINTS;loop++)
     {
       if(mPcBreakpoints[loop]==mPC)
       {
@@ -1679,7 +1679,7 @@ public:
     mPC=regs.PC;
     gSystemCPUSleep=regs.WAIT;
 #ifdef _LYNXDBG
-    for(int loop=0;loop<MAX_CPU_BREAKPOINTS;loop++) mPcBreakpoints[loop]=regs.cpuBreakpoints[loop];
+    for(ULONG loop=0;loop<MAX_CPU_BREAKPOINTS;loop++) mPcBreakpoints[loop]=regs.cpuBreakpoints[loop];
 #endif
     gSystemNMI=regs.NMI;
     gSystemIRQ=regs.IRQ;
@@ -1697,13 +1697,13 @@ public:
     regs.PC=mPC;
     regs.WAIT=(gSystemCPUSleep)?true:false;
 #ifdef _LYNXDBG
-    for(int loop=0;loop<MAX_CPU_BREAKPOINTS;loop++) regs.cpuBreakpoints[loop]=mPcBreakpoints[loop];
+    for(ULONG loop=0;loop<MAX_CPU_BREAKPOINTS;loop++) regs.cpuBreakpoints[loop]=mPcBreakpoints[loop];
 #endif
     regs.NMI=(gSystemNMI)?true:false;
     regs.IRQ=(gSystemIRQ)?true:false;
   }
   
-  inline int GetPC(void) { return mPC; }
+  inline SLONG GetPC(void) { return mPC; }
   
   inline void xILLEGAL(void)
   {
@@ -1715,33 +1715,33 @@ private:
   
   // CPU Flags & status
   
-  int mA;         // Accumulator                 8 bits
-  int mX;         // X index register            8 bits
-  int mY;         // Y index register            8 bits
-  int mSP;                // Stack Pointer               8 bits
-  int mOpcode;  // Instruction opcode          8 bits
-  int mOperand; // Intructions operand              16 bits
-  int mPC;                // Program Counter            16 bits
+  SLONG mA;         // Accumulator                 8 bits
+  SLONG mX;         // X index register            8 bits
+  SLONG mY;         // Y index register            8 bits
+  SLONG mSP;                // Stack Pointer               8 bits
+  SLONG mOpcode;  // Instruction opcode          8 bits
+  SLONG mOperand; // Intructions operand              16 bits
+  SLONG mPC;                // Program Counter            16 bits
   
-  int mN;         // N flag for processor status register
-  int mV;         // V flag for processor status register
-  int mB;         // B flag for processor status register
-  int mD;         // D flag for processor status register
-  int mI;         // I flag for processor status register
-  int mZ;         // Z flag for processor status register
-  int mC;         // C flag for processor status register
+  SLONG mN;         // N flag for processor status register
+  SLONG mV;         // V flag for processor status register
+  SLONG mB;         // B flag for processor status register
+  SLONG mD;         // D flag for processor status register
+  SLONG mI;         // I flag for processor status register
+  SLONG mZ;         // Z flag for processor status register
+  SLONG mC;         // C flag for processor status register
   
-  int mIRQActive;
+  SLONG mIRQActive;
   
 #ifdef _LYNXDBG
-  int mPcBreakpoints[MAX_CPU_BREAKPOINTS];
-  int mDbgFlag;
+  SLONG mPcBreakpoints[MAX_CPU_BREAKPOINTS];
+  SLONG mDbgFlag;
 #endif
   UBYTE *mRamPointer;
   
   // Associated lookup tables
   
-  int mBCDTable[2][256];
+  SLONG mBCDTable[2][256];
   
   //
   // Opcode prototypes
@@ -1750,7 +1750,7 @@ private:
 private:
   
   // Answers value of the Processor Status register
-  int PS() const
+  SLONG PS() const
   {
     UBYTE ps = 0x20;
     if(mN) ps|=0x80;
@@ -1764,7 +1764,7 @@ private:
   }
   
   // Change the processor flags to correspond to the given value
-  void PS(int ps)
+  void PS(SLONG ps)
   {
     mN=ps&0x80;
     mV=ps&0x40;

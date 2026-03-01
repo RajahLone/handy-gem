@@ -78,7 +78,7 @@ typedef struct lssfile
   ULONG index_limit;
 } LSS_FILE;
 
-int lss_read(void* dest,int varsize, int varcount,LSS_FILE *fp, UBYTE flip);
+ULONG lss_read(void* dest, SLONG varsize, SLONG varcount,LSS_FILE *fp, UBYTE flip);
 
 //
 // Define the interfaces before we start pulling in the classes
@@ -117,7 +117,7 @@ public:
   
 public:
   void Reset(void);
-  bool ContextSave(char *context, int kind);
+  bool ContextSave(char *context, SLONG kind);
   bool ContextLoad(char *context);
   inline void Update(void)
   {   // Only update if there is a predicted timer event
@@ -186,9 +186,9 @@ public:
   
   void    DisplaySetAttributes(ULONG Rotate,ULONG Format,ULONG Pitch) { mMikie->DisplaySetAttributes(Rotate,Format,Pitch); };
   
-  void    ComLynxCable(int status) { mMikie->ComLynxCable(status); };
-  void    ComLynxRxData(int data)  { mMikie->ComLynxRxData(data); };
-  void    ComLynxTxCallback(void (*function)(int data,ULONG objref),ULONG objref) { mMikie->ComLynxTxCallback(function,objref); };
+  void    ComLynxCable(SLONG status) { mMikie->ComLynxCable(status); };
+  void    ComLynxRxData(SLONG data)  { mMikie->ComLynxRxData(data); };
+  void    ComLynxTxCallback(void (*function)(SLONG data,ULONG objref),ULONG objref) { mMikie->ComLynxTxCallback(function,objref); };
   
   // Suzy system interfacing
   
@@ -201,7 +201,7 @@ public:
   void    SetCycleBreakpoint(ULONG breakpoint) {mCycleCountBreakpoint=breakpoint;};
   UBYTE*  GetRamPointer(void) {return mRam->GetRamPointer();};
 #ifdef _LYNXDBG
-  void    DebugTrace(int address);
+  void    DebugTrace(SLONG address);
   
   void    DebugSetCallback(void (*function)(ULONG objref, char *message),ULONG objref);
   

@@ -157,9 +157,9 @@ CCart::CCart(UBYTE* gamedata, ULONG gamesize)
   
   // Initialiase
   
-  int cartsize = __max(0, int(gamesize - sizeof(LYNX_HEADER)));
-  int bank0size = __min(cartsize, (int)(mMaskBank0+1));
-  int bank1size = __min(cartsize, (int)(mMaskBank1+1));
+  SLONG cartsize = __max(0, SLONG(gamesize - sizeof(LYNX_HEADER)));
+  SLONG bank0size = __min(cartsize, (SLONG)(mMaskBank0+1));
+  SLONG bank1size = __min(cartsize, (SLONG)(mMaskBank1+1));
   memcpy(
          mCartBank0,
          gamedata+(sizeof(LYNX_HEADER)),
@@ -187,7 +187,7 @@ CCart::CCart(UBYTE* gamedata, ULONG gamesize)
     // Check if this is a headerless cart
     //
     mHeaderLess = TRUE;
-    for (int loop = 0; loop < 32; loop++)
+    for (ULONG loop = 0; loop < 32; loop++)
     {   if (mCartBank0[loop&mMaskBank0] != 0x00) mHeaderLess = FALSE;
     }   }
   
@@ -360,7 +360,7 @@ inline UBYTE CCart::Peek(ULONG addr)
 
 void CCart::CartAddressStrobe(bool strobe)
 {
-  static int last_strobe=0;
+  static SLONG last_strobe=0;
   
   mStrobe=strobe;
   
@@ -446,9 +446,9 @@ UBYTE CCart::Peek1(void)
  {   return getcrc32((unsigned char*) buf, len);
  }
  
- ULONG getcrc32(UBYTE* address, int thesize)
+ ULONG getcrc32(UBYTE* address, SLONG thesize)
  {   register ULONG crc;
- int   i;
+ SLONG   i;
  
  crc = 0xFFFFFFFF;
  for (i = 0; i < thesize; i++)
@@ -460,7 +460,7 @@ UBYTE CCart::Peek1(void)
 
 EXPORT void generate_crctable(void)
 {   ULONG crc;
-  int   i, j;
+  SLONG   i, j;
   
   for (i = 0; i < 256; i++)
   {   crc = (ULONG) i;

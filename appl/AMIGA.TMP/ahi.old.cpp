@@ -41,13 +41,15 @@ void ahi_pause(void);
 #endif
 
 struct timer_s
-{   struct MsgPort*     TimerMP;
+{
+  struct MsgPort*     TimerMP;
   struct timerequest* TimerIO;
   struct Device*      TimerBase;
 };
 
 typedef struct audio_buffer_s
-{   void* buffer;
+{
+  void* buffer;
   s32   size;
   s64   time;
   s32   used;
@@ -111,7 +113,8 @@ void timer_usleep(struct timer_s* timer, int us);
 void timer_exit(struct timer_s* timer);
 
 static void ahi_task(void)
-{   struct AHIRequest *AHIIO  = NULL,
+{
+  struct AHIRequest *AHIIO  = NULL,
   *AHIIO1 = NULL,
   *AHIIO2 = NULL;
   struct MsgPort    *AHIMP1 = NULL,
@@ -154,7 +157,8 @@ static void ahi_task(void)
       ReleaseSemaphore(audio.semaphore);
       
       if (audio.play & used)
-      {   AHIIO->ahir_Std.io_Command = CMD_WRITE;
+      {
+        AHIIO->ahir_Std.io_Command = CMD_WRITE;
         AHIIO->ahir_Std.io_Data    = audio.audio_buffers[audio.read_buffer].buffer;
         AHIIO->ahir_Std.io_Length  = audio.audio_buffers[audio.read_buffer].size;
         AHIIO->ahir_Std.io_Offset  = 0;
@@ -167,10 +171,12 @@ static void ahi_task(void)
         SendIO((struct IORequest*) AHIIO);
         
         if (link)
-        {   u32 sigbit = 1 << link->ahir_Std.io_Message.mn_ReplyPort->mp_SigBit;
+        {
+          u32 sigbit = 1 << link->ahir_Std.io_Message.mn_ReplyPort->mp_SigBit;
           
           for (;;)
-          {   signals = Wait(SIGBREAKF_CTRL_E | SIGBREAKF_CTRL_D | sigbit);
+          {
+            signals = Wait(SIGBREAKF_CTRL_E | SIGBREAKF_CTRL_D | sigbit);
             
             if (signals & SIGBREAKF_CTRL_E)
             {   flags |= FLAG_EXIT;

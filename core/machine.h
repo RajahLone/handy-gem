@@ -1,17 +1,15 @@
+#include <stdint.h>
+
 #ifndef MACHINE_H
 #define MACHINE_H
 
-// Bytes should be 8-bits wide
-typedef signed char SBYTE;
-typedef unsigned char UBYTE;
-
-// Words should be 16-bits wide
-typedef signed short SWORD;
-typedef unsigned short UWORD;
-
-// Longs should be 32-bits wide
-typedef signed long SLONG;
-typedef unsigned long ULONG;
+#define ULONG uint32_t
+#define SLONG int32_t
+#define UWORD uint16_t
+#define SWORD int16_t
+#define UBYTE uint8_t
+#define SBYTE int8_t
+#define STRPTR char*
 
 // Read/Write Cycle definitions
 #define CPU_RDWR_CYC    5

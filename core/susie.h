@@ -268,44 +268,44 @@ private:
   TMATHEFGH       mMATHEFGH;              // ENG
   TMATHJKLM       mMATHJKLM;              // ENG
   TMATHNP         mMATHNP;                // ENG
-  int                     mMATHAB_sign;
-  int                     mMATHCD_sign;
-  int                     mMATHEFGH_sign;
+  SLONG           mMATHAB_sign;
+  SLONG           mMATHCD_sign;
+  SLONG           mMATHEFGH_sign;
   
-  int                     mSPRCTL0_Type;                  // SCB
-  int                     mSPRCTL0_Vflip;
-  int                     mSPRCTL0_Hflip;
-  int                     mSPRCTL0_PixelBits;
+  SLONG           mSPRCTL0_Type;                  // SCB
+  SLONG           mSPRCTL0_Vflip;
+  SLONG           mSPRCTL0_Hflip;
+  SLONG           mSPRCTL0_PixelBits;
   
-  int                     mSPRCTL1_StartLeft;             // SCB
-  int                     mSPRCTL1_StartUp;
-  int                     mSPRCTL1_SkipSprite;
-  int                     mSPRCTL1_ReloadPalette;
-  int                     mSPRCTL1_ReloadDepth;
-  int                     mSPRCTL1_Sizing;
-  int                     mSPRCTL1_Literal;
+  SLONG           mSPRCTL1_StartLeft;             // SCB
+  SLONG           mSPRCTL1_StartUp;
+  SLONG           mSPRCTL1_SkipSprite;
+  SLONG           mSPRCTL1_ReloadPalette;
+  SLONG           mSPRCTL1_ReloadDepth;
+  SLONG           mSPRCTL1_Sizing;
+  SLONG           mSPRCTL1_Literal;
   
-  int                     mSPRCOLL_Number;                //CPU
-  int                     mSPRCOLL_Collide;
+  SLONG           mSPRCOLL_Number;                //CPU
+  SLONG           mSPRCOLL_Collide;
   
-  int                     mSPRSYS_StopOnCurrent;  //CPU
-  int                     mSPRSYS_LeftHand;
-  int                     mSPRSYS_VStretch;
-  int                     mSPRSYS_NoCollide;
-  int                     mSPRSYS_Accumulate;
-  int                     mSPRSYS_SignedMath;
-  int                     mSPRSYS_Status;
-  int                     mSPRSYS_UnsafeAccess;
-  int                     mSPRSYS_LastCarry;
-  int                     mSPRSYS_Mathbit;
-  int                     mSPRSYS_MathInProgress;
+  SLONG           mSPRSYS_StopOnCurrent;  //CPU
+  SLONG           mSPRSYS_LeftHand;
+  SLONG           mSPRSYS_VStretch;
+  SLONG           mSPRSYS_NoCollide;
+  SLONG           mSPRSYS_Accumulate;
+  SLONG           mSPRSYS_SignedMath;
+  SLONG           mSPRSYS_Status;
+  SLONG           mSPRSYS_UnsafeAccess;
+  SLONG           mSPRSYS_LastCarry;
+  SLONG           mSPRSYS_Mathbit;
+  SLONG           mSPRSYS_MathInProgress;
   
   ULONG           mSUZYBUSEN;             // CPU
   
   TSPRINIT        mSPRINIT;               // CPU
   
   ULONG           mSPRGO;                 // CPU
-  int                     mEVERON;
+  SLONG           mEVERON;
   
   UBYTE           mPenIndex[16];  // SCB
   
@@ -318,7 +318,7 @@ private:
   ULONG           mLinePixel;
   ULONG           mLinePacketBitsLeft;
   
-  int                     mCollision;
+  SLONG           mCollision;
   
   UBYTE           *mRamPointer;
   

@@ -30,7 +30,7 @@ CMikie::CMikie(CSystem& parent)
   mUART_CABLE_PRESENT=FALSE;
   mpUART_TX_CALLBACK=NULL;
   
-  int loop;
+  UWORD loop;
   for(loop=0;loop<16;loop++) mPalette[loop].Index=loop;
   for(loop=0;loop<4096;loop++) mColourMap[loop]=0;
   
@@ -221,7 +221,7 @@ void CMikie::Reset(void)
   
   // Start with an empty palette
   
-  for(int loop=0;loop<16;loop++)
+  for(UWORD loop=0;loop<16;loop++)
   {
     mPalette[loop].Index=loop;
   }
@@ -730,12 +730,12 @@ void CMikie::PresetForHomebrew(void)
   mDISPCTL_Colour=TRUE;
 }
 
-void CMikie::ComLynxCable(int status)
+void CMikie::ComLynxCable(SLONG status)
 {
   mUART_CABLE_PRESENT=status;
 }
 
-void CMikie::ComLynxRxData(int data)
+void CMikie::ComLynxRxData(SLONG data)
 {
   TRACE_MIKIE1("ComLynxRxData() - Received %04x",data);
   // Copy over the data
@@ -757,7 +757,7 @@ void CMikie::ComLynxRxData(int data)
   }
 }
 
-void CMikie::ComLynxTxLoopback(int data)
+void CMikie::ComLynxTxLoopback(SLONG data)
 {
   TRACE_MIKIE1("ComLynxTxLoopback() - Received %04x",data);
   
@@ -779,7 +779,7 @@ void CMikie::ComLynxTxLoopback(int data)
   }
 }
 
-void CMikie::ComLynxTxCallback(void (*function)(int data,ULONG objref),ULONG objref)
+void CMikie::ComLynxTxCallback(void (*function)(SLONG data,ULONG objref),ULONG objref)
 {
   mpUART_TX_CALLBACK=function;
   mUART_TX_CALLBACK_OBJECT=objref;

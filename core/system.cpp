@@ -199,7 +199,7 @@ void CSystem::Reset(void)
   }
 }
 
-bool CSystem::ContextSave(char *context, int kind)
+bool CSystem::ContextSave(char *context, SLONG kind)
 {
   FILE *fp;
   bool status=1;

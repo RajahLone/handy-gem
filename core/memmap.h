@@ -40,12 +40,12 @@ public:
   // Data members
   
 private:
-  int                             mMikieEnabled;
-  int                             mSusieEnabled;
-  int                             mRomEnabled;
-  int                             mVectorsEnabled;
+  SLONG   mMikieEnabled;
+  SLONG   mSusieEnabled;
+  SLONG   mRomEnabled;
+  SLONG   mVectorsEnabled;
   
-  CSystem&                mSystem;
+  CSystem&   mSystem;
 };
 
 #endif
