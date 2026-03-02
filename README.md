@@ -6,7 +6,6 @@ Handy 0.95 is an Atari Lynx emulator, written by Keith Wilkins [https://handy.so
 and was released under the GPL on 14th April 2004.
 
 work-in-progress, TODOs are:
-- fix pixel format for INTEL and FALCON, currently OK for TC24 and TC32 screenmodes.
 - fix timers or optimize (currently too slow).
 - joypad support.
 - audio? (sound routines are currently disabled).
