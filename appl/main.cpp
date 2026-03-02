@@ -56,14 +56,17 @@ static uint16_t  viewport_height = HANDY_SCREEN_HEIGHT;
 static uint16_t  viewport_pixel_format;
 static uint16_t  viewport_pitch = 1;
 static uint8_t   *viewport_buffer;
+static uint32_t  viewport_size;
 
 static uint16_t  scaling_available = 0;
 static uint16_t  scaled_width  = HANDY_SCREEN_WIDTH;
 static uint16_t  scaled_height = HANDY_SCREEN_HEIGHT;
 static uint8_t   *scaled_buffer;
 
-static int16_t vdi_bpp;
-static int16_t vdi_handle;
+static int16_t  vdi_handle;
+static int16_t  vdi_bpp;
+static int16_t  vdi_bpp_real;
+static uint16_t vdi_pixel_format;
 static uint16_t screen_width;
 static uint16_t screen_height;
 
@@ -252,7 +255,71 @@ uint8_t* displaycallback(void)
 {
   int16_t zoom_pxy[8];
   
-  // TODO: vdi_pixel_format if VDI_BIT_ORDER_INTEL, VDI_BIT_ORDER_FALCON;
+  if ((vdi_bpp_real == 15) && (vdi_pixel_format == VDI_BIT_ORDER_FALCON))
+  {
+    uint8_t  o, r, g, b;
+    
+    uint16_t* raster_buffer = (uint16_t *)viewport_buffer;
+    size_t    raster_size = (size_t)(viewport_size/2);
+
+    for (size_t i = 0; i < raster_size; i ++)
+    {
+      o = (raster_buffer[i] >> 15) & 0x1;
+      r = (raster_buffer[i] >> 10) & 0x1f;
+      g = (raster_buffer[i] >> 5)  & 0x1f;
+      b =  raster_buffer[i]        & 0x1f;
+      
+      raster_buffer[i] = (r << 11) | (g << 6) | (o << 5) | b;
+    }
+  }
+  else if (vdi_pixel_format == VDI_BIT_ORDER_INTEL)
+  {
+    uint8_t a, r, g, b, h, l;
+
+    uint8_t* raster_buffer = viewport_buffer;
+    size_t   raster_size = (size_t)viewport_size;
+
+    switch(vdi_bpp_real)
+    {
+      case 15:
+      case 16: // swapped bytes (e.g. for Crazy Dots cards)
+        for (size_t i = 0; i < raster_size; i += 2)
+        {
+          h = raster_buffer[i];
+          l = raster_buffer[i + 1];
+          
+          raster_buffer[i]     = l;
+          raster_buffer[i + 1] = h;
+        }
+        break;
+      case 24: // RGB to BGR
+        for (size_t i = 0; i < raster_size; i += 3)
+        {
+          r = raster_buffer[i];
+          g = raster_buffer[i + 1];
+          b = raster_buffer[i + 2];
+          
+          raster_buffer[i]     = b;
+          raster_buffer[i + 1] = g;
+          raster_buffer[i + 2] = r;
+        }
+        break;
+      case 32: // ARGB to BGRA
+        for (size_t i = 0; i < raster_size; i += 4)
+        {
+          a = raster_buffer[i];
+          r = raster_buffer[i + 1];
+          g = raster_buffer[i + 2];
+          b = raster_buffer[i + 3];
+          
+          raster_buffer[i]     = b;
+          raster_buffer[i + 1] = g;
+          raster_buffer[i + 2] = r;
+          raster_buffer[i + 3] = a;
+        }
+        break;
+    }
+  }
   
   if (viewport_scale > 1)
   {
@@ -289,7 +356,6 @@ int32_t main(int32_t argc, char *argv[])
   
   int16_t dummy;
   int16_t work_in[12], work_out[272];
-  uint16_t vdi_pixel_format;
   
   uint32_t dummy2;
   int16_t modern_aes;
@@ -341,9 +407,10 @@ int32_t main(int32_t argc, char *argv[])
   
   vq_extnd(vdi_handle, 1, work_out);
   vdi_bpp = work_out[4];
+  vdi_bpp_real = vdi_bpp;
   vdi_pixel_format = VDI_BIT_ORDER_CLASSIC;
   if (work_out[30] & 0x1) { scaling_available = 1; } else { scaling_available = 0; }
-  
+    
   vsf_color(vdi_handle, 0);
   vsf_interior(vdi_handle, 1);
   vsf_perimeter(vdi_handle, 0);
@@ -354,6 +421,8 @@ int32_t main(int32_t argc, char *argv[])
     
     vdi_bpp = work_out[2];
     
+    if (vdi_bpp == 16) { if (work_out[9] == 5 /* 5 bits for green, not 6 */) { vdi_bpp_real = 15; } }
+
     if (work_out[1] != 2) { form_alert(1, ALERT_NO_SOFTWARE_CLUT); goto exit_prg; }
     
     if ((work_out[14] & 2) && (vdi_bpp < 24)) { vdi_pixel_format = VDI_BIT_ORDER_FALCON; }
@@ -419,7 +488,7 @@ int32_t main(int32_t argc, char *argv[])
   
   if (win_resize(Lynx->mCart->CartGetRotate(), viewport_scale)) { goto exit_prg; }
   
-  switch(vdi_bpp)
+  switch(vdi_bpp_real)
   {
     case 15:
       viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_555;
