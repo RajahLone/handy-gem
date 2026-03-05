@@ -255,24 +255,7 @@ uint8_t* displaycallback(void)
 {
   int16_t zoom_pxy[8];
   
-  if ((vdi_bpp_real == 15) && (vdi_pixel_format == VDI_BIT_ORDER_FALCON))
-  {
-    uint8_t  o, r, g, b;
-    
-    uint16_t* raster_buffer = (uint16_t *)viewport_buffer;
-    size_t    raster_size = (size_t)(viewport_size/2);
-
-    for (size_t i = 0; i < raster_size; i ++)
-    {
-      o = (raster_buffer[i] >> 15) & 0x1;
-      r = (raster_buffer[i] >> 10) & 0x1f;
-      g = (raster_buffer[i] >> 5)  & 0x1f;
-      b =  raster_buffer[i]        & 0x1f;
-      
-      raster_buffer[i] = (r << 11) | (g << 6) | (o << 5) | b;
-    }
-  }
-  else if (vdi_pixel_format == VDI_BIT_ORDER_INTEL)
+  if (vdi_pixel_format == VDI_BIT_ORDER_INTEL)
   {
     uint8_t a, r, g, b, h, l;
 
@@ -491,7 +474,8 @@ int32_t main(int32_t argc, char *argv[])
   switch(vdi_bpp_real)
   {
     case 15:
-      viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_555;
+      if (vdi_pixel_format == VDI_BIT_ORDER_FALCON) { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_565; }
+                                               else { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_555; }
       viewport_pitch = 2;
       break;
     case 16:
