@@ -35,6 +35,47 @@ int16_t has_extension(const char *filename, const char *ext)
 // from libcmini
 int16_t get_current_dir(int16_t drive, char *path) { int16_t ret = Dgetpath(path, drive); if (ret < 0) { ret = -1; } return ret; }
 
+
+static const char *HANDY_LOG_PATHNAME = "u:\\ram\\handy.log";
+static uint8_t has_spacedisk = 1;
+uint8_t is_mint_os = 0;
+
+// from Daroou's sources
+int16_t is_file_exist(const char *filename)
+{
+	int32_t	fhandle = Fopen(filename, 0);
+	if (fhandle < 0) { return 0; }
+	Fclose(fhandle);
+	return 1;
+}
+void write2log(char *text)
+{
+  if (!is_mint_os)  { return; }
+  if (!has_spacedisk) { return; }
+
+  int32_t fhandle;
+
+	if (is_file_exist(HANDY_LOG_PATHNAME))
+	{
+    fhandle = Fopen(HANDY_LOG_PATHNAME, S_WRITE);
+	}
+	else
+	{
+		fhandle = Fcreate(HANDY_LOG_PATHNAME, 0);
+  }
+  
+  if (fhandle > 0)
+  {
+    Fseek(0, fhandle, SEEK_END);
+    if (Fwrite(fhandle, strlen(text), text) != (int32_t)strlen(text)) { has_spacedisk = 0; }
+    if (has_spacedisk) { Fwrite(fhandle, 1, "\n"); }
+    Fclose(fhandle);
+	}
+  
+	return;
+}
+
+
 // from Daroou's sources
 uint32_t get_cookie_table_ptr(void) { return (*((uint32_t *)0x5A0L)); }
 uint32_t *get_cookie_table(void) { return ((uint32_t *)Supexec(get_cookie_table_ptr)); }

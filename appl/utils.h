@@ -8,6 +8,8 @@ int16_t has_extension(const char *filename, const char *ext);
 
 int16_t get_current_dir(int16_t drive, char *path);
 
+void write2log(char *text);
+
 int16_t get_cookie(const uint32_t cookie_id, uint32_t *cookie_val);
 
 uint16_t Mxmask(void);

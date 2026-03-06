@@ -5,15 +5,16 @@
 
 #include "amiga.h"
 #include "system.h"
+#include "../appl/utils.h"
 
 // lecgacy amiga port functions
 
 EXPORT ULONG nextstop = 0;
 
-EXPORT void say(STRPTR text) // TODO: outputs to logfile u:\ram\handy.log if MiNT
+EXPORT void say(STRPTR text)
 {
-  printf(text);
-  printf("\n");
+  //printf(text);printf("\n");
+  write2log(text);
 }
 
 EXPORT void flipuint(ULONG* theaddress)

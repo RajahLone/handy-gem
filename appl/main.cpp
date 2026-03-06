@@ -35,6 +35,7 @@ static const char *ALERT_NOT_ENOUGH_RAM = "[1][Not enough memory for Lynx screen
 //
 
 uint16_t mxMask = 0xFFFF;
+extern uint8_t  is_mint_os;
 
 #define MAXPATHLEN 512
 #define MAXNAMELEN 128
@@ -350,17 +351,18 @@ int32_t main(int32_t argc, char *argv[])
   // app init
   
   ap_id = appl_init(); if (ap_id < 0) { return -1; }
-  
+    
   mxMask = Mxmask();
   
   graf_mouse(ARROW, NULL);
   get_current_dir(0, appl_pathname);
   
   modern_aes = 0;
+  is_mint_os = 0;
   
-  if (get_cookie(C_MiNT, &dummy2)) { modern_aes = 1; }
+  if (get_cookie(C_MiNT, &dummy2)) { modern_aes = 1; is_mint_os = 1; }
   else
-    if (get_cookie(C_MagX, &dummy2)) { modern_aes = 1; }
+  if (get_cookie(C_MagX, &dummy2)) { modern_aes = 1; }
   
   if (modern_aes)
   {
@@ -410,7 +412,7 @@ int32_t main(int32_t argc, char *argv[])
     
     if ((work_out[14] & 2) && (vdi_bpp < 24)) { vdi_pixel_format = VDI_BIT_ORDER_FALCON; }
     
-    if (work_out[14] & 128) { vdi_pixel_format = VDI_BIT_ORDER_INTEL; }
+    if (work_out[14] & 128) { vdi_pixel_format = VDI_BIT_ORDER_INTEL; write2log((char*)"- VDI: will byteswap for Intel pixel format"); }
   }
   
   if (vdi_bpp < 15) { form_alert(1, ALERT_NO_SOFTWARE_CLUT); goto exit_prg; }
@@ -422,11 +424,15 @@ int32_t main(int32_t argc, char *argv[])
   screen_mfdb.fd_stand	  =	0;
   screen_mfdb.fd_nplanes	=	0;
   
+  write2log((char*)"- program init");
+  if (scaling_available) { write2log((char*)"- scaling available in VDI"); }
+  if (vdi_pixel_format == VDI_BIT_ORDER_INTEL) { write2log((char*)"- will byteswap for Intel pixel format"); }
+  
   // find bios rom
   
   strcpy(bios_pathname, BIOS_NAME);
   
-  if (!shel_find(bios_pathname)) { form_alert(1, ALERT_BIOS_NOT_FOUND); goto exit_prg; }
+  if (!shel_find(bios_pathname)) { form_alert(1, ALERT_BIOS_NOT_FOUND); write2log((char*)"* missing lynxboot.img"); goto exit_prg; }
   
   // find cart rom: in argv or use fileselector
   
@@ -446,7 +452,7 @@ int32_t main(int32_t argc, char *argv[])
     strcpy(cart_pathname, appl_pathname);
     strcat(cart_pathname, "\\*.lnx");
     
-    if (fsel_cart(cart_pathname, cart_filename, &fsel_button, TITL_CART) == 0) { form_alert(1, ALERT_FSEL_ISSUE); goto exit_prg; }
+    if (fsel_cart(cart_pathname, cart_filename, &fsel_button, TITL_CART) == 0) { form_alert(1, ALERT_FSEL_ISSUE); write2log((char*)"* fileselector issue"); goto exit_prg; }
     
     if (fsel_button == 0) { goto exit_prg; }
     
@@ -460,13 +466,18 @@ int32_t main(int32_t argc, char *argv[])
       if (!has_extension(cart_pathname, ".lnx")) { goto exit_prg; }
     }
   }
-  
+      
   // instanciate handy
   
   gAudioEnabled = FALSE; // audio is disabled
   
-  try { Lynx = new CSystem(cart_pathname, bios_pathname); } catch (...) { goto exit_prg; }
+  try { Lynx = new CSystem(cart_pathname, bios_pathname); } catch (...) { write2log((char*)"* emulator instance creation issue"); goto exit_prg; }
   
+  strcpy(appl_pathname, "- loaded ");
+  strcat(appl_pathname, cart_pathname);
+    
+  write2log((char*)appl_pathname);
+
   nextstop = gSystemCycleCount;
   
   if (win_resize(Lynx->mCart->CartGetRotate(), viewport_scale)) { goto exit_prg; }
@@ -551,7 +562,7 @@ int32_t main(int32_t argc, char *argv[])
           break;
           
         case WM_FULLED:
-          if (msg[3] == win_handle) { if (scaling_available) { if (win_resize(viewport_rotate, ++viewport_scale)) { goto exit_prg; } } }
+          if (msg[3] == win_handle) { if (scaling_available) { if (win_resize(viewport_rotate, ++viewport_scale)) { goto exit_app; } } }
           break;
           
         case WM_REDRAW:
@@ -570,10 +581,10 @@ int32_t main(int32_t argc, char *argv[])
             goto exit_app;
             break;
           case 18: // Ctrl+R
-            if (win_resize(++viewport_rotate, viewport_scale)) { goto exit_prg; }
+            if (win_resize(++viewport_rotate, viewport_scale)) { goto exit_app; }
             break;
           case 6:  // Ctrl+F
-            if (scaling_available) { if (win_resize(viewport_rotate, ++viewport_scale)) { goto exit_prg; } }
+            if (scaling_available) { if (win_resize(viewport_rotate, ++viewport_scale)) { goto exit_app; } }
             break;
         }
       }
@@ -645,6 +656,8 @@ exit_app:
 exit_prg:
   v_clsvwk(vdi_handle);
   appl_exit();
-  
+
+  write2log((char*)"- program exit");
+
   return 0;
 }

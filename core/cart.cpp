@@ -39,7 +39,7 @@ CCart::CCart(UBYTE* gamedata, ULONG gamesize)
     
     if(header.magic[0]!='L' || header.magic[1]!='Y' || header.magic[2]!='N' || header.magic[3]!='X' || header.version!=1)
     {
-      say((STRPTR) "File format invalid (magic number)!");
+      say((STRPTR) "* file format invalid (magic number)!");
       throw 0;
     }
     
@@ -105,7 +105,7 @@ CCart::CCart(UBYTE* gamedata, ULONG gamesize)
       mCountMask0  = 0x7ff;
       break;
     default:
-      say((STRPTR) "File format invalid (bank 0)!");
+      say((STRPTR) "* file format invalid (bank 0)!");
       throw 0;
   }
   
@@ -142,7 +142,7 @@ CCart::CCart(UBYTE* gamedata, ULONG gamesize)
       mCountMask1=0x7ff;
       break;
     default:
-      say((STRPTR) "File format invalid (bank 1)!");
+      say((STRPTR) "* file format invalid (bank 1)!");
       throw 0;
   }
   

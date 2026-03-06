@@ -41,7 +41,7 @@ mSusie(NULL)
     
     // Open the cartridge file for reading
     if((fp=fopen(gamefile,"rb"))==NULL)
-    {   say((STRPTR) "File not found!");
+    {   say((STRPTR) "* file not found!");
       throw 0;
     }
     
@@ -53,7 +53,7 @@ mSusie(NULL)
     
     if(fread(filememory,sizeof(char),filesize,fp)!=filesize)
     {   delete filememory;
-      say((STRPTR) "File read error!");
+      say((STRPTR) "* file read error!");
       throw 0;
     }
     
@@ -74,7 +74,7 @@ mSusie(NULL)
     else
     {   delete filememory;
       mFileType = HANDY_FILETYPE_ILLEGAL;
-      say((STRPTR) "Unsupported file format (unrecognized)!");
+      say((STRPTR) "* unsupported file format (unrecognized)!");
       throw 0;
     }   }
   
@@ -93,7 +93,7 @@ mSusie(NULL)
     case HANDY_FILETYPE_LNX:
       mCart = new CCart(filememory,filesize);
       if(mCart->CartHeaderLess())
-      {   say((STRPTR) "Unsupported file format (headerless)!");
+      {   say((STRPTR) "* unsupported file format (headerless)!");
         throw 0;
       }
       else
@@ -102,7 +102,7 @@ mSusie(NULL)
       }
       break;
     case HANDY_FILETYPE_HOMEBREW:
-      say((STRPTR) "Unsupported file format (homebrew)!");
+      say((STRPTR) "* unsupported file format (homebrew)!");
       throw 0;
       break;
     case HANDY_FILETYPE_SNAPSHOT:
@@ -136,7 +136,7 @@ mSusie(NULL)
   {
     if(!ContextLoad(gamefile))
     {   Reset();
-      say((STRPTR) "State load error!");
+      say((STRPTR) "* state load error!");
       throw 0;
     }
   }

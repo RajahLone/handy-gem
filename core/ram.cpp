@@ -27,7 +27,7 @@ CRam::CRam(UBYTE *filememory,ULONG filesize)
     memcpy(&header,mFileData,sizeof(HOME_HEADER));
     
     if(header.magic[0]!='B' || header.magic[1]!='S' || header.magic[2]!='9' || header.magic[3]!='3')
-    {   say((STRPTR) "File format invalid (magic number)!");
+    {   say((STRPTR) "* file format invalid (magic number)!");
       throw 0;
     }
   }
