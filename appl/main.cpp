@@ -259,10 +259,10 @@ uint8_t* displaycallback(void)
   if (vdi_pixel_format == VDI_BIT_ORDER_INTEL)
   {
     uint8_t a, r, g, b, h, l;
-
+    
     uint8_t* raster_buffer = viewport_buffer;
     size_t   raster_size = (size_t)viewport_size;
-
+    
     switch(vdi_bpp_real)
     {
       case 15:
@@ -351,7 +351,7 @@ int32_t main(int32_t argc, char *argv[])
   // app init
   
   ap_id = appl_init(); if (ap_id < 0) { return -1; }
-    
+  
   mxMask = Mxmask();
   
   graf_mouse(ARROW, NULL);
@@ -362,7 +362,7 @@ int32_t main(int32_t argc, char *argv[])
   
   if (get_cookie(C_MiNT, &dummy2)) { modern_aes = 1; is_mint_os = 1; }
   else
-  if (get_cookie(C_MagX, &dummy2)) { modern_aes = 1; }
+    if (get_cookie(C_MagX, &dummy2)) { modern_aes = 1; }
   
   if (modern_aes)
   {
@@ -395,7 +395,7 @@ int32_t main(int32_t argc, char *argv[])
   vdi_bpp_real = vdi_bpp;
   vdi_pixel_format = VDI_BIT_ORDER_CLASSIC;
   if (work_out[30] & 0x1) { scaling_available = 1; } else { scaling_available = 0; }
-    
+  
   vsf_color(vdi_handle, 0);
   vsf_interior(vdi_handle, 1);
   vsf_perimeter(vdi_handle, 0);
@@ -407,7 +407,7 @@ int32_t main(int32_t argc, char *argv[])
     vdi_bpp = work_out[2];
     
     if (vdi_bpp == 16) { if (work_out[9] == 5 /* 5 bits for green, not 6 */) { vdi_bpp_real = 15; } }
-
+    
     if (work_out[1] != 2) { form_alert(1, ALERT_NO_SOFTWARE_CLUT); goto exit_prg; }
     
     if ((work_out[14] & 2) && (vdi_bpp < 24)) { vdi_pixel_format = VDI_BIT_ORDER_FALCON; }
@@ -466,7 +466,7 @@ int32_t main(int32_t argc, char *argv[])
       if (!has_extension(cart_pathname, ".lnx")) { goto exit_prg; }
     }
   }
-      
+  
   // instanciate handy
   
   gAudioEnabled = FALSE; // audio is disabled
@@ -475,9 +475,9 @@ int32_t main(int32_t argc, char *argv[])
   
   strcpy(appl_pathname, "- loaded ");
   strcat(appl_pathname, cart_pathname);
-    
+  
   write2log((char*)appl_pathname);
-
+  
   nextstop = gSystemCycleCount;
   
   if (win_resize(Lynx->mCart->CartGetRotate(), viewport_scale)) { goto exit_prg; }
@@ -486,7 +486,7 @@ int32_t main(int32_t argc, char *argv[])
   {
     case 15:
       if (vdi_pixel_format == VDI_BIT_ORDER_FALCON) { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_565; }
-                                               else { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_555; }
+      else { viewport_pixel_format = MIKIE_PIXEL_FORMAT_16BPP_555; }
       viewport_pitch = 2;
       break;
     case 16:
@@ -531,7 +531,7 @@ int32_t main(int32_t argc, char *argv[])
   while (1)
   {
     int16_t ev_which, kstate, kc;
-     
+    
     ev_which = evnt_multi(
                           MU_MESAG | MU_TIMER | MU_KEYBD,
                           0,0,0,
@@ -591,7 +591,7 @@ int32_t main(int32_t argc, char *argv[])
       else if (kstate == 0) // TODO: is it possible to combine keys?
       {
         uint32_t KeyMask = 0;
-
+        
         switch ((kc >> 8) & 0xff)
         {
           case 0x48: // up arrow
@@ -614,7 +614,7 @@ int32_t main(int32_t argc, char *argv[])
           case 0x55: // Shift+F2
             KeyMask |= BUTTON_OPT2;
             break;
-         default:
+          default:
             switch (kc & 0xff)
             {
               case 0x50: // P
@@ -656,8 +656,8 @@ exit_app:
 exit_prg:
   v_clsvwk(vdi_handle);
   appl_exit();
-
+  
   write2log((char*)"- program exit");
-
+  
   return 0;
 }

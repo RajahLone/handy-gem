@@ -10,10 +10,10 @@
 // lecgacy amiga port functions
 
 EXPORT ULONG nextstop = 0;
+EXPORT char say_buffer[2048];
 
 EXPORT void say(STRPTR text)
 {
-  //printf(text);printf("\n");
   write2log(text);
 }
 

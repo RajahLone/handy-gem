@@ -11,7 +11,7 @@ void CMikie::BlowOut(void)
 {
   C6502_REGS regs;
   mSystem.GetRegs(regs);
-  printf("Runtime Error - System Halted\nCMikie::Poke() - Read/Write to counter clocks at PC=$%04x.\n",regs.PC);
+  sprintf(say_buffer, "* Runtime Error - System Halted\nCMikie::Poke() - Read/Write to counter clocks at PC=$%04x.\n",regs.PC); say(say_buffer);
   gSystemHalt=TRUE;
 }
 
@@ -834,7 +834,7 @@ void CMikie::DisplaySetAttributes(ULONG Rotate,ULONG Format,ULONG Pitch)
       }
       break;
     default:
-      printf("CMikie::SetScreenAttributes() - Unrecognised display format\n");
+      sprintf(say_buffer, "* CMikie::SetScreenAttributes() - Unrecognised display format\n"); say(say_buffer);
       for(Spot.Index=0;Spot.Index<4096;Spot.Index++) mColourMap[Spot.Index]=0;
       break;
   }
@@ -1879,7 +1879,7 @@ void CMikie::Poke(ULONG addr,UBYTE data)
        {
        C6502_REGS regs;
        mSystem.GetRegs(regs);
-       printf("Runtime Alert - System Halted\nCMikie::Poke(SYSCTL1) - Lynx power down occured at PC=$%04x.\nResetting system.\n",regs.PC);
+       sprintf(say_buffer, "* Runtime Alert - System Halted\nCMikie::Poke(SYSCTL1) - Lynx power down occured at PC=$%04x.\nResetting system.\n",regs.PC); say(say_buffer);
        mSystem.Reset();
        gSystemHalt=TRUE;
        } */
@@ -2009,7 +2009,7 @@ void CMikie::Poke(ULONG addr,UBYTE data)
     case (Mtest2&0xff):
       // Test registers are unimplemented
       // lets hope no programs use them.
-      printf("CMikie::Poke() - Write to MTEST2\n");
+      sprintf(say_buffer, "* CMikie::Poke() - Write to MTEST2\n"); say(say_buffer);
       TRACE_MIKIE2("Poke(MTEST2,%02x) at PC=%04x",data,mSystem.mCpu->GetPC());
       break;
       

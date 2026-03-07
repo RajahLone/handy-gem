@@ -308,7 +308,7 @@ bool CSystem::ContextLoad(char *context)
        {
        delete fp;
        delete filememory;
-       printf("LSS Snapshot CRC does not match the loaded cartridge image, aborting load");
+       sprintf(say_buffer, "* LSS Snapshot CRC does not match the loaded cartridge image, aborting load"); say(say_buffer);
        return 0;
        } */
     }
@@ -359,7 +359,8 @@ bool CSystem::ContextLoad(char *context)
     if(!mSusie->ContextLoad(fp)) status=0;
     if(!mCpu->ContextLoad(fp)) status=0;
   } else
-  {   printf("Not a recognised LSS file\n");
+  {
+    sprintf(say_buffer, "* not a recognised LSS file\n"); say(say_buffer);
   }
   
   delete fp;

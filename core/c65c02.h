@@ -1707,7 +1707,7 @@ public:
   
   inline void xILLEGAL(void)
   {
-    printf("C65C02::Update() - Illegal opcode (%02x) at PC=$%04x.\n",mOpcode,mPC);
+    sprintf(say_buffer, "* C65C02::Update() - Illegal opcode (%02x) at PC=$%04x.\n",mOpcode,mPC); say(say_buffer);
   }
   
 private:

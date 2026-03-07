@@ -13,6 +13,8 @@
 #define MODULE static /* external static (file-scope) */
 #define EXPORT
 
+extern char say_buffer[2048];
+
 EXPORT void refresh(void);
 EXPORT void flipuint(ULONG* theaddress);
 EXPORT void flipuword(UWORD* theaddress);

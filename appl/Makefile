@@ -28,6 +28,6 @@ OBJS = $(COBJS:.cpp=.o)
 all: $(OBJS)
 
 $(OBJS): $(COBJS) $(HEADER)
-	$(CP) $(CFLAGS) -m68000 $(INCS) -c $*.cpp -o ../build/68000/$*.o
-	$(CP) $(CFLAGS) -m68020-60 $(INCS) -c $*.cpp -o ../build/68020/$*.o
-	$(CP) $(CFLAGS) -mcpu=5475 $(INCS) -c $*.cpp -o ../build/ColdFire/$*.o
+	$(CP) $(CFLAGS) -m68000 -c $*.cpp -o ../build/68000/$*.o
+	$(CP) $(CFLAGS) -m68020-60 -c $*.cpp -o ../build/68020/$*.o
+	$(CP) $(CFLAGS) -mcpu=5475 -c $*.cpp -o ../build/ColdFire/$*.o

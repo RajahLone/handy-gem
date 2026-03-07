@@ -942,7 +942,7 @@ ULONG CSusie::PaintSprites(void)
       // Perform Sprite debugging if required, single step on sprite draw
       if(gSingleStepModeSprites)
       {
-        printf("CSusie:PaintSprites() - Rendered Sprite %03d",sprcount);
+        sprintf(say_buffer, "* CSusie:PaintSprites() - Rendered Sprite %03d",sprcount); say(say_buffer);
         gSingleStepModeSprites=0;
       }
     }
@@ -969,7 +969,7 @@ ULONG CSusie::PaintSprites(void)
       // Stop the system, otherwise we may just come straight back in.....
       gSystemHalt=TRUE;
       // Display warning message
-      printf("CSusie:PaintSprites(): Single draw sprite limit exceeded (>4096). The SCB is most likely looped back on itself. Reset/Exit is recommended\n");
+      sprintf(say_buffer, "* CSusie:PaintSprites(): Single draw sprite limit exceeded (>4096). The SCB is most likely looped back on itself. Reset/Exit is recommended\n"); say(say_buffer);
       // Signal error to the caller
       return 0;
     }
@@ -1326,7 +1326,7 @@ inline ULONG CSusie::LineInit(ULONG voff)
   
   if(voff>101)
   {
-    printf("CSusie::LineInit() Out of bounds (voff)\n");
+    sprintf(say_buffer, "* CSusie::LineInit() Out of bounds (voff)\n"); say(say_buffer);
     voff=0;
   }
   
