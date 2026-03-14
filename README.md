@@ -7,7 +7,6 @@ and was released under the GPL on 14th April 2004.
 
 work-in-progress, TODOs are:
 - fix timers or optimize (currently too slow).
-- joypad support.
 - audio? (sound routines are currently disabled).
 
 usage:
@@ -17,6 +16,7 @@ usage:
 - Ctrl+R to rotate screen.
 - Ctrl+F or window fuller for x2 then x3 window zoom (available only if the VDI support vro_cpyfm scaling, such as in some NVDI drivers).
 - Ctrl+Q or Ctrl+U to quit the application.
+- joypad A (Jaguar STE Falcon pad controller) is supposedly handled (not tested). Lynx option 1 = Option button or 1 on the numeric keypad, Lynx option 2 = 2 on the numeric keypad.
 
 notes:
 - verify if the handy.prg flags are sets to be loaded and use TTRAM, to gain some speed on FireBee and CT60.

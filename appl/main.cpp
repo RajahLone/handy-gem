@@ -17,6 +17,8 @@
 
 #include "../core/system.h"
 
+#include "ejp.h"
+
 //
 // global constants
 //
@@ -348,6 +350,8 @@ int32_t main(int32_t argc, char *argv[])
   
   uint16_t loop;
   
+  struct JOYPAD joypad_A;
+  
   // app init
   
   ap_id = appl_init(); if (ap_id < 0) { return -1; }
@@ -637,6 +641,25 @@ int32_t main(int32_t argc, char *argv[])
     }
     if (ev_which & MU_TIMER)
     {
+      if (ev_which & ~MU_KEYBD)
+      {
+        uint32_t KeyMask = 0;
+        
+        read_joypadA(&joypad_A);
+        
+        if (joypad_A.UP)    { switch(viewport_rotate) { case MIKIE_NO_ROTATE: KeyMask |= BUTTON_UP; break; case MIKIE_ROTATE_L: KeyMask |= BUTTON_LEFT; break; case MIKIE_ROTATE_R: KeyMask |= BUTTON_RIGHT; } }
+        if (joypad_A.DOWN)  { switch(viewport_rotate) { case MIKIE_NO_ROTATE: KeyMask |= BUTTON_DOWN; break; case MIKIE_ROTATE_L: KeyMask |= BUTTON_RIGHT; break; case MIKIE_ROTATE_R: KeyMask |= BUTTON_LEFT; } }
+        if (joypad_A.LEFT)  { switch(viewport_rotate) { case MIKIE_NO_ROTATE: KeyMask |= BUTTON_LEFT; break; case MIKIE_ROTATE_L: KeyMask |= BUTTON_DOWN; break; case MIKIE_ROTATE_R: KeyMask |= BUTTON_UP; } }
+        if (joypad_A.RIGHT) { switch(viewport_rotate) { case MIKIE_NO_ROTATE: KeyMask |= BUTTON_RIGHT; break; case MIKIE_ROTATE_L: KeyMask |= BUTTON_UP; break; case MIKIE_ROTATE_R: KeyMask |= BUTTON_DOWN; } }
+        if (joypad_A.FIRE_A) { KeyMask |= BUTTON_A; }
+        if (joypad_A.FIRE_B) { KeyMask |= BUTTON_B; }
+        if (joypad_A.PAUSE)  { KeyMask |= BUTTON_PAUSE; }
+        if (joypad_A.OPTION | joypad_A.NUMPAD_1) { KeyMask |= BUTTON_OPT1; }
+        if (joypad_A.NUMPAD_2 ) { KeyMask |= BUTTON_OPT2; }
+
+        Lynx->SetButtonData(KeyMask);
+      }
+      
       nextstop += HANDY_SYSTEM_FREQ / HANDY_TIMER_FREQ; // ie. 800,000 cycles (50ms)
       nextstop -= 10;                                   // minus 10ms of MU_TIMER
       
