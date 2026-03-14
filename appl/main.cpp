@@ -511,6 +511,8 @@ int32_t main(int32_t argc, char *argv[])
       break;
   }
   
+  // TODO: MIKIE_PIXEL_FORMAT_8BPP = 256c chunky if VDI handles it (V4SA, FireBee, MagicOnLinux...)
+  
   Lynx->DisplaySetAttributes(viewport_rotate, viewport_pixel_format, ROUNDTOLONG(viewport_width) * viewport_pitch);
   
   // win init
@@ -535,7 +537,8 @@ int32_t main(int32_t argc, char *argv[])
   while (1)
   {
     int16_t ev_which, kstate, kc;
-    
+    uint32_t KeyMask = 0;
+
     ev_which = evnt_multi(
                           MU_MESAG | MU_TIMER | MU_KEYBD,
                           0,0,0,
@@ -594,8 +597,6 @@ int32_t main(int32_t argc, char *argv[])
       }
       else if (kstate == 0) // TODO: is it possible to combine keys?
       {
-        uint32_t KeyMask = 0;
-        
         switch ((kc >> 8) & 0xff)
         {
           case 0x48: // up arrow
@@ -641,10 +642,8 @@ int32_t main(int32_t argc, char *argv[])
     }
     if (ev_which & MU_TIMER)
     {
-      if (ev_which & ~MU_KEYBD)
+      if ((ev_which & ~MU_KEYBD) & (!KeyMask))
       {
-        uint32_t KeyMask = 0;
-        
         read_joypadA(&joypad_A);
         
         if (joypad_A.UP)    { switch(viewport_rotate) { case MIKIE_NO_ROTATE: KeyMask |= BUTTON_UP; break; case MIKIE_ROTATE_L: KeyMask |= BUTTON_LEFT; break; case MIKIE_ROTATE_R: KeyMask |= BUTTON_RIGHT; } }
@@ -657,7 +656,7 @@ int32_t main(int32_t argc, char *argv[])
         if (joypad_A.OPTION | joypad_A.NUMPAD_1) { KeyMask |= BUTTON_OPT1; }
         if (joypad_A.NUMPAD_2 ) { KeyMask |= BUTTON_OPT2; }
 
-        Lynx->SetButtonData(KeyMask);
+        if (KeyMask) { Lynx->SetButtonData(KeyMask); }
       }
       
       nextstop += HANDY_SYSTEM_FREQ / HANDY_TIMER_FREQ; // ie. 800,000 cycles (50ms)
