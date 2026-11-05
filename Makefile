@@ -52,8 +52,11 @@ new: clean
 $(OBJS):
 
 $(TARGET):
+	mkdir -p ./build/68000
+	mkdir -p ./build/68020
+	mkdir -p ./build/ColdFire
 	cd ./core && $(MAKE) all && cd ..
 	cd ./appl && $(MAKE) all && cd ..
-	$(CC) ./build/68000/*.o -m68000 $(LDLIBS) -o ./build/68000/$(TARGET)
-	$(CC) ./build/68020/*.o -m68020-60 $(LDLIBS) -o ./build/68020/$(TARGET)
-	$(CC) ./build/ColdFire/*.o -mcpu=5475 $(LDLIBS) -o ./build/ColdFire/$(TARGET)
+	$(CC) $(LDFLAGS) ./build/68000/*.o -o ./build/68000/$(TARGET) -m68000 -L$(PREFIX)/m68k-atari-mint/lib $(LDLIBS)
+	$(CC) $(LDFLAGS) ./build/68020/*.o -o ./build/68020/$(TARGET) -m68020-60 -L$(PREFIX)/m68k-atari-mint/lib/m68020-60 $(LDLIBS)
+	$(CC) $(LDFLAGS) ./build/ColdFire/*.o -o ./build/ColdFire/$(TARGET) -mcpu=5475 -L$(PREFIX)/m68k-atari-mint/lib/m5475 $(LDLIBS)
