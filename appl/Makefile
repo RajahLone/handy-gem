@@ -4,11 +4,11 @@
 CFLAGS = -O3 -MMD -Wall
 
 # list header files here
-HEADER = utils.h main.h
+HEADER = utils.h ejp.h ejp_defs.h masks.h main.h
 
 # list C++ files here
 #
-COBJS = utils.h main.cpp
+COBJS = utils.cpp main.cpp
 
 SRCFILES = $(HEADER) $(COBJS) $(SOBJS)
 

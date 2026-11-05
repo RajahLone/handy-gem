@@ -510,9 +510,7 @@ int32_t main(int32_t argc, char *argv[])
       viewport_pitch = 1;
       break;
   }
-  
-  // TODO: MIKIE_PIXEL_FORMAT_8BPP = 256c chunky if VDI handles it (V4SA, FireBee, MagicOnLinux...)
-  
+    
   Lynx->DisplaySetAttributes(viewport_rotate, viewport_pixel_format, ROUNDTOLONG(viewport_width) * viewport_pitch);
   
   // win init
