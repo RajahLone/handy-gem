@@ -415,8 +415,8 @@ public:
             // Fetch a byte from the input queue
             if(mUART_Rx_waiting>0)
             {
-              mUART_RX_DATA=mUART_Rx_input_queue[mUART_Rx_output_ptr];
-              mUART_Rx_output_ptr=(++mUART_Rx_output_ptr)%UART_MAX_RX_QUEUE;
+              mUART_RX_DATA=mUART_Rx_input_queue[mUART_Rx_output_ptr]; mUART_Rx_output_ptr++;
+              mUART_Rx_output_ptr=(mUART_Rx_output_ptr)%UART_MAX_RX_QUEUE;
               mUART_Rx_waiting--;
               TRACE_MIKIE2("Update() - RX Byte output ptr=%02d waiting=%02d",mUART_Rx_output_ptr,mUART_Rx_waiting);
             }
